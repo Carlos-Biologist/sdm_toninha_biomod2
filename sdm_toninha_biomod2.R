@@ -757,7 +757,7 @@ atual_ens <- imagem_tiff_ens / 1000
 
 # Visualizar a imagem
 plot(atual_ens, col = pal1)
-#plot(eez_cropped, add = TRUE)
+plot(eez_cropped, add = TRUE)
 
 # ---------------------------------------------------------------------------- #
 
@@ -879,6 +879,329 @@ grid.arrange(bathy, sst, sal, ncol = 3)
 
 # ---------------------------------------------------------------------------- #
 
+#chl_baseline_surf <- "chl_baseline_2000_2018_depthsurf" ### mg m-3
+
+chl_ssp585_surf <- "chl_ssp585_2020_2100_depthsurf" ### mg m-3
+mld_ssp585_surf <- "mlotst_ssp585_2020_2100_depthsurf" ### m
+tsm_ssp585_surf <- "thetao_ssp585_2020_2100_depthsurf" ### °C
+sal_ssp585_surf <- "so_ssp585_2020_2100_depthsurf" ### PSU
+swd_ssp585_surf <- "swd_ssp585_2020_2100_depthsurf" ### Graus
+sws_ssp585_surf <- "sws_ssp585_2020_2100_depthsurf" ### m s**-1
+bathy_ssp585 <- "terrain_characteristics" ### metros  
+
+### Definir período de tempo, latitude e longitude 
+
+time_bathy_ssp585 = c('1970-01-01T00:00:00Z', '1970-01-01T00:00:00Z') ## Não mudar nada
+#time_2050_ssp585 = c('2050-01-01T00:00:00Z', '2050-01-01T00:00:00Z') ## Não mudar nada
+time_2100_ssp585 = c('2090-01-01T00:00:00Z', '2090-01-01T00:00:00Z') ## Não mudar nada
+latitude_ssp585 = c(-10, -89.975) ## Não mudar nada
+longitude_ssp585 = c(-70, -20) ## Não mudar nada
+
+constraints_bathy_ssp585 = list(time_bathy_ssp585, latitude_ssp585, longitude_ssp585) ## Não mudar nada
+#constraints_2050_ssp585 = list(time_2050_ssp585, latitude_ssp585, longitude_ssp585) ## Não mudar nada
+constraints_2100_ssp585 = list(time_2100_ssp585, latitude_ssp585, longitude_ssp585) ## Não mudar nada
+
+#names(constraints_2050_ssp585) = c("time", "latitude", "longitude") ## Não mudar nada
+names(constraints_2100_ssp585) = c("time", "latitude", "longitude") ## Não mudar nada
+names(constraints_bathy_ssp585) = c("time", "latitude", "longitude") ## Não mudar nada
+
+variables_chl_ssp585_surf = c("chl_mean") ## Não mudar nada
+variables_mld_ssp585_surf = c("mlotst_mean") ## Não mudar nada
+variables_tsm_ssp585_surf = c("thetao_mean") ## Não mudar nada
+variables_sal_ssp585_surf = c("so_mean") ## Não mudar nada
+variables_swd_ssp585_surf = c("swd_mean") ## Não mudar nada
+variables_sws_ssp585_surf = c("sws_mean") ## Não mudar nada
+variables_bathy_ssp585 = c("bathymetry_mean") ## Não mudar nada
+
+#chl_ssp585_surf_2050 <- download_layers(chl_ssp585_surf, variables_chl_ssp585_surf, constraints_2050_ssp585)
+chl_ssp585_surf_2100 <- download_layers(chl_ssp585_surf, variables_chl_ssp585_surf, constraints_2100_ssp585)
+#mld_ssp585_surf_2050 <- download_layers(mld_ssp585_surf, variables_mld_ssp585_surf, constraints_2050_ssp585)
+mld_ssp585_surf_2100 <- download_layers(mld_ssp585_surf, variables_mld_ssp585_surf, constraints_2100_ssp585)
+#tsm_ssp585_surf_2050 <- download_layers(tsm_ssp585_surf, variables_tsm_ssp585_surf, constraints_2050_ssp585)
+tsm_ssp585_surf_2100 <- download_layers(tsm_ssp585_surf, variables_tsm_ssp585_surf, constraints_2100_ssp585)
+#sal_ssp585_surf_2050 <- download_layers(sal_ssp585_surf, variables_sal_ssp585_surf, constraints_2050_ssp585)
+sal_ssp585_surf_2100 <- download_layers(sal_ssp585_surf, variables_sal_ssp585_surf, constraints_2100_ssp585)
+#swd_ssp585_surf_2050 <- download_layers(swd_ssp585_surf, variables_swd_ssp585_surf, constraints_2050_ssp585)
+swd_ssp585_surf_2100 <- download_layers(swd_ssp585_surf, variables_swd_ssp585_surf, constraints_2100_ssp585)
+#sws_ssp585_surf_2050 <- download_layers(sws_ssp585_surf, variables_sws_ssp585_surf, constraints_2050_ssp585)
+sws_ssp585_surf_2100 <- download_layers(sws_ssp585_surf, variables_sws_ssp585_surf, constraints_2100_ssp585)
+#bathy_ssp585_2050 <- download_layers(bathy_ssp585, variables_bathy_ssp585, constraints_bathy_ssp585)
+bathy_ssp585_2100 <- download_layers(bathy_ssp585, variables_bathy_ssp585, constraints_bathy_ssp585)
+
+# Criar RasterLayer a partir dos SpatRaster
+#chl_ssp585_surf_raster_2050 <- raster(chl_ssp585_surf_2050)
+chl_ssp585_surf_raster_2100 <- raster(chl_ssp585_surf_2100)
+#mld_ssp585_surf_raster_2050 <- raster(mld_ssp585_surf_2050)
+mld_ssp585_surf_raster_2100 <- raster(mld_ssp585_surf_2100)
+#tsm_ssp585_surf_raster_2050 <- raster(tsm_ssp585_surf_2050)
+tsm_ssp585_surf_raster_2100 <- raster(tsm_ssp585_surf_2100)
+#sal_ssp585_surf_raster_2050 <- raster(sal_ssp585_surf_2050)
+sal_ssp585_surf_raster_2100 <- raster(sal_ssp585_surf_2100)
+#swd_ssp585_surf_raster_2050 <- raster(swd_ssp585_surf_2050)
+swd_ssp585_surf_raster_2100 <- raster(swd_ssp585_surf_2100)
+#sws_ssp585_surf_raster_2050 <- raster(sws_ssp585_surf_2050)
+sws_ssp585_surf_raster_2100 <- raster(sws_ssp585_surf_2100)
+#bathy_ssp585_raster_2050 <- raster(bathy_ssp585_2050)
+bathy_ssp585_raster_2100 <- raster(bathy_ssp585_2100)
+
+# Empilhar os RasterLayer em um RasterStack
+
+#bio_ssp585_2050 <- stack(chl_ssp585_surf_raster_2050, mld_ssp585_surf_raster_2050, tsm_ssp585_surf_raster_2050, sal_ssp585_surf_raster_2050, 
+#                             swd_ssp585_surf_raster_2050, sws_ssp585_surf_raster_2050, bathy_ssp585_raster_2050)
+
+bio_ssp585_2100 <- stack(chl_ssp585_surf_raster_2100, mld_ssp585_surf_raster_2100, tsm_ssp585_surf_raster_2100, sal_ssp585_surf_raster_2100, 
+                             swd_ssp585_surf_raster_2100, sws_ssp585_surf_raster_2100, bathy_ssp585_raster_2100)
 
 
+# Verificar a estrutura do RasterStack resultante
+print(bio_ssp585_2100)
+plot(bio_ssp585_2100)
 
+# ---------------------------------------------------------------------------- #
+
+#bio_ssp585_2050 <- crop(bio_ssp585_2050, oceans_cropped) # recorte da área de estudo
+#bio_ssp585_2050 <- mask(bio_ssp585_2050, oceans_cropped) # máscara fora da área de estudo
+
+#names(bio_chl_ssp585_2050)
+
+bio_ssp585_2100 <- crop(bio_ssp585_2100, oceans_cropped) # recorte da área de estudo
+bio_ssp585_2100 <- mask(bio_ssp585_2100, oceans_cropped) # máscara fora da área de estudo
+
+names(bio_ssp585_2100)
+
+# ---------------------------------------------------------------------------- #
+
+## then call Projection function
+toninha_ssp585_2100_projection <- BIOMOD_Projection(toninha_model,
+                                                    new.env = bio_ssp585_2100,
+                                                    proj.name = 'ssp585_2100',
+                                                    selected.models = 'all',
+                                                    compress = FALSE,
+                                                    build.clamping.mask = FALSE)
+
+toninha_ssp585_2100_ens_ens <- BIOMOD_EnsembleForecasting(toninha_ens,
+                                                          projection.output = toninha_ssp585_2100_projection,
+                                                          new.env = bio_ssp585_2100,
+                                                          selected.models = 'all',
+                                                          proj.name = "ensemble_new_ssp585_2100",
+                                                          binary.meth = "TSS")
+
+# Caminho para o arquivo
+caminho_arquivo_ens_ssp585_2100 <- "C:/Cursos/Modelagem/Vídeo-aula/sdm_toninha_biomod2/species/proj_ensemble_new_ssp585_2100/proj_ensemble_new_ssp585_2100_species_ensemble.tif"
+
+# Carregar a imagem TIFF
+imagem_tiff_ens_ssp585_2100 <- raster(caminho_arquivo_ens_ssp585_2100)
+
+ssp585_2100_ens <- imagem_tiff_ens_ssp585_2100 / 1000
+
+# ---------------------------------------------------------------------------- #
+
+# Dividir a tela em 2 colunas e 1 linha
+par(mfrow = c(1, 2))
+
+# gráfico: projetado com ensemble
+plot(atual_ens, zlim = c(0, 1), col = pal1,
+     main = "Projetado atual com ensemble")
+
+# gráfico: projetado no futuro
+plot(ssp585_2100_ens, zlim = c(0, 1), col = pal1,
+     main = "Projetado no futuro\n(SSP5-8.5 - 2090/2100)")
+
+# ---------------------------------------------------------------------------- #
+
+# Calculando a perda ou ganho de adequabilidade atual x futuro
+
+# Raster atual
+n_atual_0.9_1.0 <- cellStats(
+  atual_ens >= 0.9 & atual_ens <= 1.0,
+  stat = 'sum'
+)
+
+# Raster futuro
+n_futuro_0.9_1.0 <- cellStats(
+  ssp585_2100_ens >= 0.9 & ssp585_2100_ens <= 1.0,
+  stat = 'sum'
+)
+
+n_atual_0.9_1.0
+n_futuro_0.9_1.0
+
+# ---------------------------------------------------------------------------- #
+
+# Raster atual
+n_atual_0.7_0.9 <- cellStats(
+  atual_ens > 0.7 & atual_ens <= 0.9,
+  stat = 'sum'
+)
+
+# Raster futuro
+n_futuro_0.7_0.9 <- cellStats(
+  ssp585_2100_ens > 0.7 & ssp585_2100_ens <= 0.9,
+  stat = 'sum'
+)
+
+n_atual_0.7_0.9
+n_futuro_0.7_0.9
+
+# ---------------------------------------------------------------------------- #
+
+# Raster atual
+n_atual_0.5_0.7 <- cellStats(
+  atual_ens > 0.5 & atual_ens <= 0.7,
+  stat = 'sum'
+)
+
+# Raster futuro
+n_futuro_0.5_0.7 <- cellStats(
+  ssp585_2100_ens > 0.5 & ssp585_2100_ens <= 0.7,
+  stat = 'sum'
+)
+
+n_atual_0.5_0.7
+n_futuro_0.5_0.7
+
+# ---------------------------------------------------------------------------- #
+
+# Raster atual
+n_atual_0.3_0.5 <- cellStats(
+  atual_ens > 0.3 & atual_ens <= 0.5,
+  stat = 'sum'
+)
+
+# Raster futuro
+n_futuro_0.3_0.5 <- cellStats(
+  ssp585_2100_ens > 0.3 & ssp585_2100_ens <= 0.5,
+  stat = 'sum'
+)
+
+n_atual_0.3_0.5
+n_futuro_0.3_0.5
+
+# ---------------------------------------------------------------------------- #
+
+# resolução em graus
+res_grau <- 0.05
+
+# conversão grau -> km
+km_por_grau <- 111
+pixel_km2 <- (res_grau * km_por_grau)^2
+
+pixel_km2
+
+# ---------------------------------------------------------------------------- #
+
+area_atual_km2_0.9_1.0  <- n_atual_0.9_1.0  * pixel_km2
+area_futuro_km2_0.9_1.0 <- n_futuro_0.9_1.0 * pixel_km2
+area_perda_ganho_km2_0.9_1.0  <- -(area_atual_km2_0.9_1.0 - area_futuro_km2_0.9_1.0)
+
+area_atual_km2_0.9_1.0
+area_futuro_km2_0.9_1.0
+area_perda_ganho_km2_0.9_1.0
+
+# ---------------------------------------------------------------------------- #
+
+perda_ganho_perda_percentual_0.9_1.0 <- area_perda_ganho_km2_0.9_1.0 / area_atual_km2_0.9_1.0 * 100
+perda_ganho_perda_percentual_0.9_1.0
+
+# ---------------------------------------------------------------------------- #
+
+area_atual_km2_0.7_0.9  <- n_atual_0.7_0.9  * pixel_km2
+area_futuro_km2_0.7_0.9 <- n_futuro_0.7_0.9 * pixel_km2
+area_perda_ganho_km2_0.7_0.9  <- -(area_atual_km2_0.7_0.9 - area_futuro_km2_0.7_0.9)
+
+area_atual_km2_0.7_0.9
+area_futuro_km2_0.7_0.9
+area_perda_ganho_km2_0.7_0.9
+
+# ---------------------------------------------------------------------------- #
+
+perda_ganho_perda_percentual_0.7_0.9 <- area_perda_ganho_km2_0.7_0.9 / area_atual_km2_0.7_0.9 * 100
+perda_ganho_perda_percentual_0.7_0.9
+
+# ---------------------------------------------------------------------------- #
+
+area_atual_km2_0.5_0.7  <- n_atual_0.5_0.7  * pixel_km2
+area_futuro_km2_0.5_0.7 <- n_futuro_0.5_0.7 * pixel_km2
+area_perda_ganho_km2_0.5_0.7  <- -(area_atual_km2_0.5_0.7 - area_futuro_km2_0.5_0.7)
+
+area_atual_km2_0.5_0.7
+area_futuro_km2_0.5_0.7
+area_perda_ganho_km2_0.5_0.7
+
+# ---------------------------------------------------------------------------- #
+
+perda_ganho_perda_percentual_0.5_0.7 <- area_perda_ganho_km2_0.5_0.7 / area_atual_km2_0.5_0.7 * 100
+perda_ganho_perda_percentual_0.5_0.7
+
+# ---------------------------------------------------------------------------- #
+
+area_atual_km2_0.3_0.5  <- n_atual_0.3_0.5  * pixel_km2
+area_futuro_km2_0.3_0.5 <- n_futuro_0.3_0.5 * pixel_km2
+area_perda_ganho_km2_0.3_0.5  <- -(area_atual_km2_0.3_0.5 - area_futuro_km2_0.3_0.5)
+
+area_atual_km2_0.3_0.5
+area_futuro_km2_0.3_0.5
+area_perda_ganho_km2_0.3_0.5
+
+# ---------------------------------------------------------------------------- #
+
+perda_ganho_perda_percentual_0.3_0.5 <- area_perda_ganho_km2_0.3_0.5 / area_atual_km2_0.3_0.5 * 100
+perda_ganho_perda_percentual_0.3_0.5
+
+# ---------------------------------------------------------------------------- #
+
+df_perda_ganho <- data.frame(
+  Classe = factor(
+    c("0.9–1.0", "0.7–0.9", "0.5–0.7", "0.3–0.5"),
+    levels = c("0.9–1.0", "0.7–0.9", "0.5–0.7", "0.3–0.5")
+  ),
+  Area_km2 = c(
+    area_perda_ganho_km2_0.9_1.0,
+    area_perda_ganho_km2_0.7_0.9,
+    area_perda_ganho_km2_0.5_0.7,
+    area_perda_ganho_km2_0.3_0.5
+  ),
+  Percentual = c(
+    perda_ganho_perda_percentual_0.9_1.0,
+    perda_ganho_perda_percentual_0.7_0.9,
+    perda_ganho_perda_percentual_0.5_0.7,
+    perda_ganho_perda_percentual_0.3_0.5
+  )
+)
+
+# Identificar ganho ou perda
+df_perda_ganho$Tipo <- ifelse(df_perda_ganho$Area_km2 >= 0, "Ganho", "Perda")
+
+# ---------------------------------------------------------------------------- #
+
+ggplot(df_perda_ganho, aes(x = Classe, y = Area_km2, fill = Tipo)) +
+  geom_col(width = 0.6) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+  geom_text(
+    aes(label = paste0(
+      format(round(Area_km2, 0), big.mark = ".", scientific = FALSE),
+      " km²\n(",
+      round(Percentual, 1), "%)"
+    )),
+    vjust = ifelse(df_perda_ganho$Area_km2 >= 0, -0.5, 1.5),
+    size = 5
+  ) +
+  scale_fill_manual(values = c("Ganho" = "#1F78B4", "Perda" = "#E31A1C")) +
+  labs(
+    title = "Ganho e perda de áreas de adequabilidade ambiental",
+    subtitle = "Comparação entre o cenário atual e o futuro (SSP5-8.5 – 2100)",
+    x = "Intervalo de adequabilidade",
+    y = expression("Variação de área (km"^2*")")
+  ) +
+  coord_cartesian(ylim = c(-33000, 56000)) +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "top",
+    plot.title = element_text(size = 14, face = "bold"),
+    plot.subtitle = element_text(size = 14),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 14)
+  )
+
+# ---------------------------------------------------------------------------- #
+# ---------------------------------------------------------------------------- #
