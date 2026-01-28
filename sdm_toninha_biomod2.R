@@ -558,7 +558,7 @@ pairs.panels(
 
 # ---------------------------------------------------------------------------- #
 
-# 07. Rodar SDM Biomod2 -----
+# 07. Rodar SDM Biomod2 - Atual -----
 
 # https://cran.r-project.org/web/packages/biomod2/biomod2.pdf
 
@@ -671,7 +671,6 @@ barplot(mean_var_imp$var.imp, names.arg = mean_var_imp$expl.var,
         col = "blue")
 
 # ---------------------------------------------------------------------------- #
-# ---------------------------------------------------------------------------- #
 
 ## then call Projection function
 toninha_projection <- BIOMOD_Projection(toninha_model,
@@ -681,7 +680,6 @@ toninha_projection <- BIOMOD_Projection(toninha_model,
                                         compress = FALSE,
                                         build.clamping.mask = FALSE)
 
-# ---------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------- #
 
 mods <- get_built_models(toninha_model)
@@ -702,7 +700,6 @@ toninha_ens <- BIOMOD_EnsembleModeling(
   do.progress = TRUE,
 )
 
-# ---------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------- #
 
 rcurve_toninha_ens <- 
@@ -740,7 +737,6 @@ plot(atual, col = pal1)
 #plot(eez_cropped, add = TRUE)
 
 # ---------------------------------------------------------------------------- #
-# ---------------------------------------------------------------------------- #
 
 toninha_ens_ens <- BIOMOD_EnsembleForecasting(toninha_ens,
                                               projection.output = toninha_projection,
@@ -764,13 +760,11 @@ plot(atual_ens, col = pal1)
 #plot(eez_cropped, add = TRUE)
 
 # ---------------------------------------------------------------------------- #
-# ---------------------------------------------------------------------------- #
 
 # Extrair as coordenadas de myBiomodData
 coordenadas <- myBiomodData@coord
 
-# Extrair os valores do raster nas coordenadas
-valores_extraidos <- extract(atual_ens, coordenadas)
+valores_extraidos <- raster::extract(atual_ens, coordenadas)
 
 # Visualizar os primeiros valores extraídos
 head(valores_extraidos)
@@ -781,47 +775,24 @@ head(valores_extraidos)
 dados_extraidos <- data.frame(coordenadas, valores_extraidos)
 
 head(dados_extraidos)
+str(dados_extraidos)
+
+toninha_colin$valores_extraidos <- dados_extraidos$valores_extraidos
+
+str(toninha_colin)
 
 # Salvar os dados em um arquivo .xlsx
-write.xlsx(dados_extraidos, file = "valores_extraidos_ensemble.xlsx")
+writexl::write_xlsx(
+  toninha_colin,
+  path = "toninha_colin.xlsx"
+)
 
 ## Download ou carregamento das ocorrências -----
-adequab <- readxl::read_excel("australis_env_var.xlsx")
+adequab <- readxl::read_excel("toninha_colin.xlsx")
 
 head(adequab)
 summary(adequab)
 
-# ---------------------------------------------------------------------------- #
-# ---------------------------------------------------------------------------- #
-
-# Crie o gráfico de "curva de resposta"
-ggplot(adequab, aes(x = chl_mean, y = Adequabilidade)) +
-  geom_point() + 
-  geom_smooth(method = "loess") + 
-  labs(x = "Chl-a",
-       y = "Adequabilidade") +
-  ylim(0, 1.12) +
-  theme_gray()
-
-# Crie o gráfico de "curva de resposta"
-ggplot(adequab, aes(x = dfe_mean, y = Adequabilidade)) +
-  geom_point() + 
-  geom_smooth(method = "loess") + 
-  labs(x = "Ferro Dissolvido",
-       y = "Adequabilidade") +
-  ylim(0, 1) +
-  theme_gray()
-
-# Crie o gráfico de "curva de resposta"
-ggplot(adequab, aes(x = bathymetry_mean, y = Adequabilidade)) +
-  geom_point() + 
-  geom_smooth(method = "loess") + 
-  labs(x = "Batimetria",
-       y = "Adequabilidade") +
-  ylim(0, 1) +
-  theme_gray()
-
-# ---------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------- #
 
 # Defina uma função para remover outliers usando o método do IQR
@@ -835,58 +806,79 @@ remove_outliers <- function(df, col_name) {
 }
 
 # Remova os outliers da variável "so_mean.2"
-adequab_clean_chl <- remove_outliers(adequab, "chl_mean")
-
-# Crie o gráfico de "curva de resposta" sem os outliers na variável x
-chl <- ggplot(adequab_clean_chl, aes(x = chl_mean, y = Adequabilidade)) +
-  #geom_point() + 
-  geom_smooth(method = "loess") + 
-  geom_hline(yintercept = 0.5, linetype = "dashed") +  # Adiciona linha pontilhada em y = 0.5
-  labs(x = "Chl-a",
-       y = "Adequabilidade") +
-  theme_classic() +
-  scale_y_continuous(breaks = seq(0, 1, by = 0.2)) +
-  scale_x_continuous(breaks = seq(0, 3.0, by = 0.2))
-
-plot(chl)
-
-# Remova os outliers da variável "so_mean.2"
-adequab_clean_iron <- remove_outliers(adequab, "dfe_mean")
-
-# Crie o gráfico de "curva de resposta" sem os outliers na variável x
-iron <- ggplot(adequab_clean_iron, aes(x = dfe_mean, y = Adequabilidade)) +
-  #geom_point() + 
-  geom_smooth(method = "loess") + 
-  geom_hline(yintercept = 0.5, linetype = "dashed") +  # Adiciona linha pontilhada em y = 0.5
-  labs(x = "Ferro dissolvido",
-       y = "Adequabilidade") +
-  theme_classic() +
-  scale_y_continuous(breaks = seq(0, 1, by = 0.2))
-
-plot(iron)
-
-# Remova os outliers da variável "so_mean.2"
 adequab_clean_bathy <- remove_outliers(adequab, "bathymetry_mean")
 
-# Crie o gráfico de "curva de resposta" sem os outliers na variável x
-bathy <- ggplot(adequab_clean_bathy, aes(x = bathymetry_mean, y = Adequabilidade)) +
-  #geom_point() + 
-  geom_smooth(method = "loess") + 
-  geom_hline(yintercept = 0.5, linetype = "dashed") +  # Adiciona linha pontilhada em y = 0.5
-  labs(x = "Batimetria",
-       y = "Adequabilidade") +
+bathy <- ggplot(
+  adequab_clean_bathy,
+  aes(x = bathymetry_mean, y = valores_extraidos)
+) +
+  geom_smooth(method = "loess") +
+  geom_hline(yintercept = 0.5, linetype = "dashed") +
+  labs(
+    x = "Batimetria (m)",
+    y = "Adequabilidade"
+  ) +
   theme_classic() +
-  scale_y_continuous(breaks = seq(0, 1, by = 0.2))
+  scale_y_continuous(breaks = seq(0, 1, by = 0.1)) +
+  scale_x_continuous(
+    breaks = seq(
+      floor(min(adequab_clean_bathy$bathymetry_mean) / 500) * 500,
+      ceiling(max(adequab_clean_bathy$bathymetry_mean) / 500) * 500,
+      by = 500
+    )
+  )
 
 plot(bathy)
 
-# ---------------------------------------------------------------------------- #
+# Remova os outliers da variável "so_mean.2"
+adequab_clean_sst <- remove_outliers(adequab, "thetao_mean")
+
+# Crie o gráfico de "curva de resposta" sem os outliers na variável x
+sst <- ggplot(
+  adequab_clean_sst,
+  aes(x = thetao_mean, y = valores_extraidos)
+) +
+  geom_smooth(method = "loess") +
+  geom_hline(yintercept = 0.5, linetype = "dashed") +
+  labs(
+    x = "SST (°C)",
+    y = "Adequabilidade"
+  ) +
+  theme_classic() +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.1)) +
+  scale_x_continuous(breaks = seq(0, 30, by = 1))
+
+plot(sst)
+
+# Remova os outliers da variável "so_mean.2"
+adequab_clean_sali <- remove_outliers(adequab, "so_mean")
+
+# Crie o gráfico de "curva de resposta" sem os outliers na variável x
+sal <- ggplot(adequab_clean_sali, aes(x = so_mean, y = valores_extraidos)) +
+  #geom_point() + 
+  geom_smooth(method = "loess") + 
+  geom_hline(yintercept = 0.5, linetype = "dashed") +  # Adiciona linha pontilhada em y = 0.5
+  labs(x = "Salinidade",
+       y = "Adequabilidade") +
+  theme_classic() +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.1)) +
+  scale_x_continuous(breaks = seq(0, 40, by = 1))
+
+plot(sal)
+
 # ---------------------------------------------------------------------------- #
 
 library(gridExtra)
 
 # Combine os gráficos em um painel 2x2
-grid.arrange(chl, iron, bathy, ncol = 3)
+grid.arrange(bathy, sst, sal, ncol = 3)
 
 # ---------------------------------------------------------------------------- #
+
+# 08. Rodar SDM - Cenário futuro -----
+
 # ---------------------------------------------------------------------------- #
+
+
+
+
