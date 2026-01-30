@@ -32,7 +32,7 @@ install.packages("dplyr")      # Manipulação de dados tabulares: filtrar, sele
 install.packages("dismo")      # Ferramentas para modelagem de distribuição de espécies (SDM),
 install.packages("psych")      # Funções estatísticas exploratórias, incluindo correlação, análise de colinearidade e PCA
 install.packages("devtools")   # Ferramentas para desenvolvimento e instalação de pacote
-#library(devtools)
+library(devtools)
 devtools::install_github("biomodhub/biomod2", dependencies = TRUE)  # Instalação do biomod2 diretamente do GitHub
 devtools::install_github("bio-oracle/biooracler")  # Interface para acessar dados ambientais marinhos do Bio-ORACLE
 install.packages("sf")         # Manipulação moderna de dados espaciais vetoriais (shapefiles, geopackages)
