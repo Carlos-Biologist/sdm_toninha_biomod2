@@ -3,7 +3,7 @@
 # das espécies                                                                 #
 #                                                                              #
 # Criado por: Dr. Carlos de Oliveira                                           #
-# Data: 28-01-2026                                                             #
+# Data: 21-02-2026                                                             #
 # Contato: carlos.prof.bio@gmail.com                                           #
 #                                                                              #
 # Descrição: o script representa o processo geral de implementação de          #
@@ -18,13 +18,56 @@
 # - as pastas de origem e destino dos arquivos devem ser atualizadas           #
 # conforme o computador onde serão realizados os processos de modelagem.       #
 # ---------------------------------------------------------------------------- #
-
-options(scipen = 999) # remover notação científica dos dados
-
+# ---------------------------------------------------------------------------- #
+#
+# Vídeo-aula 1 - Apresentação
+#
+# Vídeo-aula 2 - Instalar os pacotes necessários
+#              - Extrair os pontos de ocorrência da toninha (Pontoporia blainvillei)
+#              - GBIF (Global Biodiversity Information Facility)
+#              - Tratar (selecionar) os melhores pontos (até o momento).
+#              - Visualizar esse pontos
+#
+# Vídeo-aula 3 - Obter mapa da área de estudo (shapefile)  
+#
+# Vídeo-aula 4 - Obter e processar os dados ambientais (camadas) - Bio-Oracle 
+#
+# Vídeo-aula 5 - Extrair valores das camadas ambientais (pontos de presença)
+#                
+# Vídeo-aula 6 - Gerar as ausências/pseudoausências
+#                Extrair valores das camadas ambientais
+#
+# Vídeo-aula 7 - Verificar colinearidade
+#
+# Vídeo-aula 8 - Iniciar com a formatação dos dados para o pacote Biomod2
+#
+# Vídeo-aula 9 - Modelar a distribuição potencial atual da toninha 
+#              - Visualizar as variáveis mais importantes
+#              - Visualizar as principais métricas
+#
+# Vídeo-aula 10 - Modelar a distribuição potencial atual (Ensemble)
+#               - Visualizar as variáveis mais importantes
+#               - Visualizar as curvas de respostas para essas variáveis
+#
+# Vídeo-aula 11 - Rodar SDM - Cenário futuro 2090-2100 (SSP5-8.5)
+#               - Baixar as camadas ambientais
+#
+# Vídeo-aula 12 - Projetar a distribuição potencial futura da toninha
+#               - Comparar os mapas de adequabilidade (Atual x Futuro)
+#
+# Vídeo-aula 13 - Calcular a perda ou ganho de adequabilidade (Atual x Futuro)
+#               
 # ---------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------- #
 
-#Carregar pacotes
+# Vídeo-aula 2 - "Instalar" e carregar os pacotes
+#              - Extrair os pontos de ocorrência da toninha (Pontoporia blainvillei)
+#              - GBIF (Global Biodiversity Information Facility)
+#              - Tratar (selecionar) os melhores pontos (até o momento).
+#              - Visualizar esse pontos
+
+# ---------------------------------------------------------------------------- #
+# ---------------------------------------------------------------------------- #
 
 install.packages("raster")     # Leitura, manipulação, análise e visualização de dados raster (camadas ambientais, mapas contínuos, etc.)
 install.packages("tidyverse")  # Conjunto de pacotes para ciência de dados (dplyr, tidyr, ggplot2, readr, etc.)
@@ -39,7 +82,10 @@ install.packages("sf")         # Manipulação moderna de dados espaciais vetori
 install.packages("sp")         # Estruturas clássicas de dados espaciais (SpatialPoints, SpatialPolygons)
 install.packages("readxl")     # Leitura de arquivos Excel (.xls e .xlsx)
 install.packages("writexl")    # Escrita de arquivos Excel (.xlsx)
+install.packages(c("sf", "rnaturalearth", "rnaturalearthdata")) # Baixar Shapefiles
 
+library(rnaturalearth)
+library(rnaturalearthdata)
 library(raster)    
 library(tidyverse) 
 library(dplyr)     
@@ -55,11 +101,15 @@ library(readxl)
 
 # ---------------------------------------------------------------------------- #
 
+options(scipen = 999) # remover notação científica dos dados
+
 pal1 <- c("#3E49BB", "#3498DB", "yellow", "orange", "red", "darkred") # paleta de cores
 
 # ---------------------------------------------------------------------------- #
 
 # 01. Obter dados presença -----
+
+# https://www.gbif.org/
 
 ## Download ou carregamento das ocorrências -----
 sp_toninha_full <- dismo::gbif(
@@ -72,7 +122,7 @@ sp_toninha_full <- dismo::gbif(
 
 # ---------------------------------------------------------------------------- #
 
-# Dados do mapa mundial (sem filtro)
+# Dados do mapa mundi
 world_map <- map_data("world")
 
 # Plot do mapa global com os pontos
@@ -107,89 +157,73 @@ g1
 
 # ---------------------------------------------------------------------------- #
 
-names(sp_toninha_full)    # Mostra os nomes das colunas do objeto 'sp'
-sp_toninha_full$country   # Exibe todos os dados baixados
-nrow(sp_toninha_full)     # Conta o número de linhas (registros) no dataframe
+names(sp_toninha_full)    # Mostra os nomes das colunas do objeto 'sp_toninha_full'
+sp_toninha_full$country   # Exibe todos os dados baixados por país
+nrow(sp_toninha_full)      #Conta o número de linhas (registros) no dataframe
 
 # ---------------------------------------------------------------------------- #
 
 ### Tratamento dos dados -----
 sp_toninha <- sp_toninha_full %>%
   dplyr::filter(country %in% c("Brazil", "Argentina", "Uruguay")) %>%  # Mantém ocorrências nos países escolhidos
-  dplyr::select(species, lon, lat)                                     # Mantém apenas colunas de interesse
+  dplyr::select(lon, lat)                                              # Mantém apenas colunas de interesse
 
 nrow(sp_toninha)  # Número de registros após o filtro
 
 # ---------------------------------------------------------------------------- #
 
 sp_toninha <- sp_toninha %>%
-  distinct() %>%  # Remove registros duplicados
-  drop_na()       # Remove registros com valores faltantes
+  distinct() %>%      # Remove registros duplicados
+  drop_na()           # Remove registros com valores faltantes
 
 nrow(sp_toninha)      # Conta registros após limpeza
 
 # ---------------------------------------------------------------------------- #
-
-# 02. Obter mapa da área de estudo (shapefile) -----
-
-# Baixar Shapefile usando sf
-oceans <- st_read("shapefile/goas_v01.shp")
-
-# Baixar Shapefile usando sf
-eez <- st_read("shapefile/eez_boundaries_v12.shp")
-
-par(mfrow=c(1, 1))
-
-# Plotar o shapefile com personalizações
-plot(oceans$geometry, col = "lightblue")
-plot(eez, col = "black", add=TRUE)
-
-# Adicionar eixos
-axis(2, at = seq(-90, 90, by = 20))
-axis(1, at = seq(-180, 180, by = 20))
-
-# Definir as coordenadas de recorte
-coord_limit <- c(-70, -35, -60, -10)
-
-# Converter o objeto oceans de sf para sp
-oceans_sp <- as(oceans, "Spatial")
-
-# Transformar os polígonos para o sistema de coordenadas desejado
-oceans_cropped_1 <- spTransform(oceans_sp, CRS("+proj=longlat +datum=WGS84"))
-
-# Criar uma extensão usando a função extent do pacote raster
-ext_lim <- raster::extent(coord_limit[1], coord_limit[2], coord_limit[3], coord_limit[4])
-
-# Usar a função crop do pacote raster para recortar
-oceans_cropped <- raster::crop(oceans_cropped_1, ext_lim)
-
-# Converter o objeto oceans de sf para sp
-eez_sp <- as(eez, "Spatial")
-
-# Transformar os polígonos para o sistema de coordenadas desejado
-eez_cropped_1 <- spTransform(eez_sp, CRS("+proj=longlat +datum=WGS84"))
-
-# Usar a função crop do pacote raster para recortar
-eez_cropped <- raster::crop(eez_cropped_1, ext_lim)
-
 # ---------------------------------------------------------------------------- #
 
-# Plotar Shapefile recortado
-plot(oceans_cropped, col = "lightblue")
-plot(eez_cropped, add=TRUE)
+# 01. Obter mapa da área de estudo (shapefile)
+oceano <- ne_download(                          # Baixa dados geográficos do Natural Earth
+  scale = 10,                                   # Define a resolução (10 = alta resolução)
+  type = "ocean",                               # Tipo de feição: oceanos
+  category = "physical",                        # Categoria física (elementos naturais)
+  returnclass = "sf"                            # Retorna o objeto no formato sf (simple features)
+)
 
-# Adicionar eixos y
-valores_y <- c(-10, -15, -20, -25, -30, -35, -40, -45, -50, -55, -60)
-axis(2, at = valores_y)
-# Adicionar eixo x
-valores_x <- c(-70, -65, -60, -55, -50, -45, -40, -35)
-axis(1, at = valores_x)
+plot(st_geometry(oceano))                       # Plota apenas a geometria do objeto oceano
 
-points(sp_toninha$lon, sp_toninha$lat,
-       pch = 16,
-       col = "red",
-       cex = 1)
+g1 # Mostrar mapa com todos os pontos de ocorrência
 
+# Recortar área de estudo
+coord_limit <- c(-70, -35, -60, -10)            # Define limites: xmin, xmax, ymin, ymax (lon, lat)
+
+bbox <- st_bbox(                                # Cria um bounding box (caixa espacial)
+  c(xmin = coord_limit[1],                      # Limite mínimo de longitude
+    xmax = coord_limit[2],                      # Limite máximo de longitude
+    ymin = coord_limit[3],                      # Limite mínimo de latitude
+    ymax = coord_limit[4]),                     # Limite máximo de latitude
+  crs = st_crs(oceano)                          # Usa o mesmo sistema de coordenadas do oceano
+)
+
+bbox_sf <- st_as_sfc(bbox)                      # Converte o bounding box em objeto espacial sf
+                                                # transforma o bounding box em um polígono espacial no mapa 
+                                                # e não apenas um retângilo números.
+
+#sf::sf_use_s2(FALSE)                            # Desativa o motor esférico S2 para operações espaciais
+
+ocean_crop <- st_intersection(oceano, bbox_sf)  # Recorta o oceano usando o bounding box
+
+plot(st_geometry(ocean_crop))                   # Plota o oceano já recortado
+
+axis(2, at = seq(-60, -10, by = 5))             # Adiciona eixo Y com marcações de 5 em 5 graus
+
+axis(1, at = seq(-70, -35, by = 5))        # Adiciona eixo X com marcações de 5 em 5 graus
+
+points(sp_toninha$lon, sp_toninha$lat,     # Plota os pontos de ocorrência
+       pch = 16,                           # Define o símbolo do ponto (círculo sólido)
+       col = "red",                        # Define a cor dos pontos
+       cex = 1)                            # Define o tamanho dos pontos
+
+# ---------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------- #
 
 # 03. Obter dados e processar dados ambientais -----
@@ -200,7 +234,7 @@ points(sp_toninha$lon, sp_toninha$lat,
 
 list_layers()                                     # Visualizar a descrição das camadas ambientais
 
-list_layers("tas_baseline_2000_2020_depthsurf")   # Listar camada indivídual
+#list_layers("tas_baseline_2000_2020_depthsurf")   # Listar camada indivídual
 
 camadas <- list_layers()                          # Salvar todas as camadas em uma variável
 
@@ -230,8 +264,8 @@ info_layer("terrain_characteristics")
 
 time_bathy = c('1970-01-01T00:00:00Z', '1970-01-01T00:00:00Z')  # Intervalo temporal da batimetria - variável estática, sem variação temporal real
 time = c('2000-01-01T00:00:00Z', '2000-01-01T00:00:00Z')        # Intervalo temporal das variáveis ambientais
-latitude = c(-60,-10)                                       # Domínio espacial Sul global até 20°N
-longitude = c(-70, -35)                                          # Domínio espacial 90°W até 20°E
+latitude = c(-60,-10)                                           # Domínio espacial
+longitude = c(-70, -35)                                         # Domínio espacial
 
 # Listas de restrições (constraints) para consulta de dados.
 
@@ -305,8 +339,11 @@ plot(bio)
 
 # ---------------------------------------------------------------------------- #
 
-bio <- crop(bio, oceans_cropped) # recorte da área de estudo
-bio <- mask(bio, oceans_cropped) # máscara fora da área de estudo
+#bio <- crop(bio, oceans_cropped) # recorte da área de estudo
+#bio <- mask(bio, oceans_cropped) # máscara fora da área de estudo
+
+bio <- crop(bio, ocean_crop) # recorte da área de estudo
+bio <- mask(bio, ocean_crop) # máscara fora da área de estudo
 
 names(bio)
 
@@ -314,19 +351,18 @@ names(bio)
 
 # 04. Extrair valores das variáveis ambientais -----
 
-names(sp_toninha)
+head(sp_toninha) 
 
-sp_toninha_coord <- subset(sp_toninha, select = -species)  # Excluir coluna "species", manter somente "lat" e "lon"
-
-names(sp_toninha_coord)
-
-toninha_var <- raster::extract(bio, sp_toninha_coord)      # Extrair valores das variáveis ambientais
+toninha_var <- raster::extract(bio, sp_toninha)      # Extrair valores das variáveis ambientais
 
 summary(toninha_var)
+nrow(toninha_var)
 
 # ---------------------------------------------------------------------------- #
 
-toninha_concat <- cbind(sp_toninha_coord, toninha_var) # Concatenar "sp_toninha_coord e toninha_var"
+head(sp_toninha)
+
+toninha_concat <- cbind(sp_toninha, toninha_var) # Concatenar "sp_toninha e toninha_var"
 
 summary(toninha_concat)
 
@@ -343,21 +379,43 @@ write_xlsx(
 
 # ---------------------------------------------------------------------------- #
 
-# Remove os dois pontos indesejados
-toninha_sem_na <- toninha_sem_na[-c(106), ]
+# Plotar dois gráficos com os pontos
+par(mfrow = c(1, 2))
+
+plot(st_geometry(ocean_crop), col = "lightblue")
+
+axis(2, at = seq(-60, -10, by = 5))
+axis(1, at = seq(-70, -35, by = 5))
+
+points(sp_toninha$lon, sp_toninha$lat,
+       pch = 16,
+       col = "red",
+       cex = 1)
+
+plot(st_geometry(ocean_crop), col = "lightblue")
+
+axis(2, at = seq(-60, -10, by = 5))
+axis(1, at = seq(-70, -35, by = 5))
+
+points(toninha_sem_na$lon, toninha_sem_na$lat,
+       pch = 16,
+       col = "red",
+       cex = 1)
 
 # ---------------------------------------------------------------------------- #
 
-# Plotar Shapefile recortado
-plot(oceans_cropped, col = "lightblue")
-plot(eez_cropped, add=TRUE)
+# Remove os dois pontos indesejados
+toninha_sem_na <- toninha_sem_na[-c(99), ]
 
-# Adicionar eixos y
-valores_y <- c(-10, -15, -20, -25, -30, -35, -40, -45, -50, -55, -60)
-axis(2, at = valores_y)
-# Adicionar eixo x
-valores_x <- c(-70, -65, -60, -55, -50, -45, -40, -35)
-axis(1, at = valores_x)
+# ---------------------------------------------------------------------------- #
+
+# Plotar um gráfico com os pontos
+par(mfrow = c(1, 1))
+
+plot(st_geometry(ocean_crop), col = "lightblue")
+
+axis(2, at = seq(-60, -10, by = 5))
+axis(1, at = seq(-70, -35, by = 5))
 
 points(toninha_sem_na$lon, toninha_sem_na$lat,
        pch = 16,
@@ -379,10 +437,10 @@ nrow(sp_toninha_full)
 toninha_pres_sf <- st_as_sf(
   toninha_sem_na,
   coords = c("lon", "lat"),
-  crs = 4326
+  crs = 4326 # Sistema de referência de coordenadas usado no mapa (EPSG:4326 = WGS84)
 )
 
-oceans_sf <- st_as_sf(oceans_cropped)
+oceans_sf <- st_as_sf(ocean_crop)
 
 # ---------------------------------------------------------------------------- #
 
@@ -391,7 +449,7 @@ oceans_sf <- st_as_sf(oceans_cropped)
 set.seed(123)
 
 candidatos <- st_sample(
-  oceans_sf,
+  ocean_crop,
   size = 5000,        # quanto maior, melhor
   type = "random"
 )
@@ -399,6 +457,10 @@ candidatos <- st_sample(
 candidatos_sf <- st_as_sf(candidatos)
 
 # ---------------------------------------------------------------------------- #
+
+install.packages("lwgeom")
+
+library(lwgeom)
 
 # Calcular distância até os pontos de presença
 
@@ -416,13 +478,14 @@ if (nrow(ausencias_sf) < 120) {
 }
 
 ausencias_sf <- ausencias_sf %>%
-  slice_sample(n = 120)
+  slice_sample(n = 102)
 
 # ---------------------------------------------------------------------------- #
 
-# Visualização final (checagem)
-plot(oceans_cropped, col = "lightblue")
-plot(eez_cropped, add = TRUE)
+plot(st_geometry(ocean_crop), col = "lightblue")
+
+axis(2, at = seq(-60, -10, by = 5))
+axis(1, at = seq(-70, -35, by = 5))
 
 plot(st_geometry(toninha_pres_sf), add = TRUE, col = "blue", pch = 16)
 plot(st_geometry(ausencias_sf), add = TRUE, col = "red", pch = 16)
@@ -501,6 +564,8 @@ colnames(toninha_sem_na)
 
 # ---------------------------------------------------------------------------- #
 
+# Concatenar
+
 toninha_final <- rbind(
   toninha_sem_na,
   toninha_ausencias_df
@@ -511,8 +576,10 @@ str(toninha_final)
 # ---------------------------------------------------------------------------- #
 
 # Visualização base
-plot(oceans_cropped, col = "lightblue")
-plot(eez_cropped, add = TRUE)
+plot(st_geometry(ocean_crop), col = "lightblue")
+
+axis(2, at = seq(-60, -10, by = 5))
+axis(1, at = seq(-70, -35, by = 5))
 
 # Definir cores por presença/ausência
 cols <- ifelse(toninha_final$species == 1, "blue", "red")
@@ -525,13 +592,6 @@ points(
   pch = 16,
   cex = 0.8
 )
-
-# Adicionar eixos y
-valores_y <- c(-10, -15, -20, -25, -30, -35, -40, -45, -50, -55, -60)
-axis(2, at = valores_y)
-# Adicionar eixo x
-valores_x <- c(-70, -65, -60, -55, -50, -45, -40, -35)
-axis(1, at = valores_x)
 
 # ---------------------------------------------------------------------------- #
 
@@ -548,11 +608,11 @@ toninha_colin <- toninha_final %>%
   dplyr::select(-species, -lon, -lat)
 
 toninha_colin <- toninha_final %>%
-  dplyr::select(-species, -lon, -lat, -phyc_mean, -no3_mean, -po4_mean, -o2_mean, -ph_mean, -dfe_mean, -si_mean)
+  dplyr::select(-species, -lon, -lat, -phyc_mean, -mlotst_mean, -dfe_mean, -no3_mean, -po4_mean, -o2_mean, -ph_mean)
 
 pairs.panels(
   toninha_colin,
-  cex = 6,        # tamanho geral da fonte (números, correlações)
+  cex = 10,        # tamanho geral da fonte (números, correlações)
   cex.labels = 1.5 # tamanho dos nomes das variáveis
 )
 
@@ -569,7 +629,7 @@ pairs.panels(
 toninha_final <- read_xlsx("dados_toninha_final.xlsx")
 
 toninha_colin <- toninha_final %>%
-  dplyr::select(, -phyc_mean, -no3_mean, -po4_mean, -o2_mean, -ph_mean, -dfe_mean, -si_mean)
+  dplyr::select(-phyc_mean, -mlotst_mean, -dfe_mean, -no3_mean, -po4_mean, -o2_mean, -ph_mean)
 
 # Checagens básicas
 str(toninha_colin)
@@ -589,7 +649,7 @@ myRespXY <- toninha_colin[, c("lon", "lat")]
 # Dados ambientais -----
 
 # Empilhar os RasterLayer em um RasterStack
-bio_colin <- stack(chl_surf_raster, mld_surf_raster, tsm_surf_raster, sal_surf_raster, swd_surf_raster, sws_surf_raster, bathy_raster)
+bio_colin <- stack(chl_surf_raster, tsm_surf_raster, sal_surf_raster, swd_surf_raster, sws_surf_raster, bathy_raster, silicate_surf_raster)
 
 # Converter Brick → Stack
 bio_colin <- raster::stack(bio_colin)
@@ -610,7 +670,7 @@ myBiomodData <- BIOMOD_FormatingData(
 myBiomodData
 myBiomodData@coord
 head(myBiomodData@data.env.var)
-plot(myBiomodData)
+#plot(myBiomodData)
 
 # ---------------------------------------------------------------------------- #
 
@@ -619,7 +679,7 @@ ModelsTable # Visualizar algoritmos
 #allModels <- c('ANN', 'CTA', 'DNN', 'FDA', 'GAM', 'GBM', 'GLM', 'MARS'
 #               , 'MAXENT', 'MAXNET', 'RF', 'RFd', 'SRE', 'XGBOOST')
 
-allModels <- c('GAM', 'GLM', 'RF', 'XGBOOST')
+allModels <- c('GAM', 'GLM', 'RF', 'XGBOOST', 'MAXENT')
 
 toninha_opt <- bm_ModelingOptions(
   data.type = 'binary',
@@ -631,7 +691,7 @@ toninha_opt <- bm_ModelingOptions(
 toninha_model <- BIOMOD_Modeling(
   bm.format    = myBiomodData,
   modeling.id = 'AllModels',
-  models      = c('GAM','GLM','RF','XGBOOST'),
+  models      = c('GAM','GLM','RF','XGBOOST', 'MAXENT'),
   CV.strategy = 'block',    # validação cruzada espacial (em blocos)
   CV.perc     = 0.7,
   OPT.strategy = 'default',
@@ -734,7 +794,6 @@ atual <- imagem_tiff / 1000
 
 # Visualizar a imagem
 plot(atual, col = pal1)
-#plot(eez_cropped, add = TRUE)
 
 # ---------------------------------------------------------------------------- #
 
@@ -757,7 +816,6 @@ atual_ens <- imagem_tiff_ens / 1000
 
 # Visualizar a imagem
 plot(atual_ens, col = pal1)
-plot(eez_cropped, add = TRUE)
 
 # ---------------------------------------------------------------------------- #
 
@@ -882,7 +940,7 @@ grid.arrange(bathy, sst, sal, ncol = 3)
 #chl_baseline_surf <- "chl_baseline_2000_2018_depthsurf" ### mg m-3
 
 chl_ssp585_surf <- "chl_ssp585_2020_2100_depthsurf" ### mg m-3
-mld_ssp585_surf <- "mlotst_ssp585_2020_2100_depthsurf" ### m
+silicate_ssp585_surf <- "si_ssp585_2020_2100_depthsurf" ### m
 tsm_ssp585_surf <- "thetao_ssp585_2020_2100_depthsurf" ### °C
 sal_ssp585_surf <- "so_ssp585_2020_2100_depthsurf" ### PSU
 swd_ssp585_surf <- "swd_ssp585_2020_2100_depthsurf" ### Graus
@@ -892,13 +950,11 @@ bathy_ssp585 <- "terrain_characteristics" ### metros
 ### Definir período de tempo, latitude e longitude 
 
 time_bathy_ssp585 = c('1970-01-01T00:00:00Z', '1970-01-01T00:00:00Z') ## Não mudar nada
-#time_2050_ssp585 = c('2050-01-01T00:00:00Z', '2050-01-01T00:00:00Z') ## Não mudar nada
 time_2100_ssp585 = c('2090-01-01T00:00:00Z', '2090-01-01T00:00:00Z') ## Não mudar nada
-latitude_ssp585 = c(-10, -89.975) ## Não mudar nada
-longitude_ssp585 = c(-70, -20) ## Não mudar nada
+latitude_ssp585 = c(-60, -10) ## Não mudar nada
+longitude_ssp585 = c(-70, -35) ## Não mudar nada
 
 constraints_bathy_ssp585 = list(time_bathy_ssp585, latitude_ssp585, longitude_ssp585) ## Não mudar nada
-#constraints_2050_ssp585 = list(time_2050_ssp585, latitude_ssp585, longitude_ssp585) ## Não mudar nada
 constraints_2100_ssp585 = list(time_2100_ssp585, latitude_ssp585, longitude_ssp585) ## Não mudar nada
 
 #names(constraints_2050_ssp585) = c("time", "latitude", "longitude") ## Não mudar nada
@@ -906,51 +962,34 @@ names(constraints_2100_ssp585) = c("time", "latitude", "longitude") ## Não muda
 names(constraints_bathy_ssp585) = c("time", "latitude", "longitude") ## Não mudar nada
 
 variables_chl_ssp585_surf = c("chl_mean") ## Não mudar nada
-variables_mld_ssp585_surf = c("mlotst_mean") ## Não mudar nada
+variables_silicate_ssp585_surf = c("si_mean") ## Não mudar nada
 variables_tsm_ssp585_surf = c("thetao_mean") ## Não mudar nada
 variables_sal_ssp585_surf = c("so_mean") ## Não mudar nada
 variables_swd_ssp585_surf = c("swd_mean") ## Não mudar nada
 variables_sws_ssp585_surf = c("sws_mean") ## Não mudar nada
 variables_bathy_ssp585 = c("bathymetry_mean") ## Não mudar nada
 
-#chl_ssp585_surf_2050 <- download_layers(chl_ssp585_surf, variables_chl_ssp585_surf, constraints_2050_ssp585)
 chl_ssp585_surf_2100 <- download_layers(chl_ssp585_surf, variables_chl_ssp585_surf, constraints_2100_ssp585)
-#mld_ssp585_surf_2050 <- download_layers(mld_ssp585_surf, variables_mld_ssp585_surf, constraints_2050_ssp585)
-mld_ssp585_surf_2100 <- download_layers(mld_ssp585_surf, variables_mld_ssp585_surf, constraints_2100_ssp585)
-#tsm_ssp585_surf_2050 <- download_layers(tsm_ssp585_surf, variables_tsm_ssp585_surf, constraints_2050_ssp585)
+silicate_ssp585_surf_2100 <- download_layers(silicate_ssp585_surf, variables_silicate_ssp585_surf, constraints_2100_ssp585)
 tsm_ssp585_surf_2100 <- download_layers(tsm_ssp585_surf, variables_tsm_ssp585_surf, constraints_2100_ssp585)
-#sal_ssp585_surf_2050 <- download_layers(sal_ssp585_surf, variables_sal_ssp585_surf, constraints_2050_ssp585)
 sal_ssp585_surf_2100 <- download_layers(sal_ssp585_surf, variables_sal_ssp585_surf, constraints_2100_ssp585)
-#swd_ssp585_surf_2050 <- download_layers(swd_ssp585_surf, variables_swd_ssp585_surf, constraints_2050_ssp585)
 swd_ssp585_surf_2100 <- download_layers(swd_ssp585_surf, variables_swd_ssp585_surf, constraints_2100_ssp585)
-#sws_ssp585_surf_2050 <- download_layers(sws_ssp585_surf, variables_sws_ssp585_surf, constraints_2050_ssp585)
 sws_ssp585_surf_2100 <- download_layers(sws_ssp585_surf, variables_sws_ssp585_surf, constraints_2100_ssp585)
-#bathy_ssp585_2050 <- download_layers(bathy_ssp585, variables_bathy_ssp585, constraints_bathy_ssp585)
 bathy_ssp585_2100 <- download_layers(bathy_ssp585, variables_bathy_ssp585, constraints_bathy_ssp585)
 
 # Criar RasterLayer a partir dos SpatRaster
-#chl_ssp585_surf_raster_2050 <- raster(chl_ssp585_surf_2050)
 chl_ssp585_surf_raster_2100 <- raster(chl_ssp585_surf_2100)
-#mld_ssp585_surf_raster_2050 <- raster(mld_ssp585_surf_2050)
-mld_ssp585_surf_raster_2100 <- raster(mld_ssp585_surf_2100)
-#tsm_ssp585_surf_raster_2050 <- raster(tsm_ssp585_surf_2050)
+silicate_ssp585_surf_raster_2100 <- raster(silicate_ssp585_surf_2100)
 tsm_ssp585_surf_raster_2100 <- raster(tsm_ssp585_surf_2100)
-#sal_ssp585_surf_raster_2050 <- raster(sal_ssp585_surf_2050)
 sal_ssp585_surf_raster_2100 <- raster(sal_ssp585_surf_2100)
-#swd_ssp585_surf_raster_2050 <- raster(swd_ssp585_surf_2050)
 swd_ssp585_surf_raster_2100 <- raster(swd_ssp585_surf_2100)
-#sws_ssp585_surf_raster_2050 <- raster(sws_ssp585_surf_2050)
 sws_ssp585_surf_raster_2100 <- raster(sws_ssp585_surf_2100)
-#bathy_ssp585_raster_2050 <- raster(bathy_ssp585_2050)
 bathy_ssp585_raster_2100 <- raster(bathy_ssp585_2100)
 
 # Empilhar os RasterLayer em um RasterStack
 
-#bio_ssp585_2050 <- stack(chl_ssp585_surf_raster_2050, mld_ssp585_surf_raster_2050, tsm_ssp585_surf_raster_2050, sal_ssp585_surf_raster_2050, 
-#                             swd_ssp585_surf_raster_2050, sws_ssp585_surf_raster_2050, bathy_ssp585_raster_2050)
-
-bio_ssp585_2100 <- stack(chl_ssp585_surf_raster_2100, mld_ssp585_surf_raster_2100, tsm_ssp585_surf_raster_2100, sal_ssp585_surf_raster_2100, 
-                             swd_ssp585_surf_raster_2100, sws_ssp585_surf_raster_2100, bathy_ssp585_raster_2100)
+bio_ssp585_2100 <- stack(chl_ssp585_surf_raster_2100, silicate_ssp585_surf_raster_2100, tsm_ssp585_surf_raster_2100, sal_ssp585_surf_raster_2100, 
+                         swd_ssp585_surf_raster_2100, sws_ssp585_surf_raster_2100, bathy_ssp585_raster_2100)
 
 
 # Verificar a estrutura do RasterStack resultante
@@ -959,13 +998,8 @@ plot(bio_ssp585_2100)
 
 # ---------------------------------------------------------------------------- #
 
-#bio_ssp585_2050 <- crop(bio_ssp585_2050, oceans_cropped) # recorte da área de estudo
-#bio_ssp585_2050 <- mask(bio_ssp585_2050, oceans_cropped) # máscara fora da área de estudo
-
-#names(bio_chl_ssp585_2050)
-
-bio_ssp585_2100 <- crop(bio_ssp585_2100, oceans_cropped) # recorte da área de estudo
-bio_ssp585_2100 <- mask(bio_ssp585_2100, oceans_cropped) # máscara fora da área de estudo
+bio_ssp585_2100 <- crop(bio_ssp585_2100, ocean_crop) # recorte da área de estudo
+bio_ssp585_2100 <- mask(bio_ssp585_2100, ocean_crop) # máscara fora da área de estudo
 
 names(bio_ssp585_2100)
 
@@ -1001,7 +1035,7 @@ par(mfrow = c(1, 2))
 
 # gráfico: projetado com ensemble
 plot(atual_ens, zlim = c(0, 1), col = pal1,
-     main = "Projetado atual com ensemble")
+     main = "Projetado atual\n(Ensemble)")
 
 # gráfico: projetado no futuro
 plot(ssp585_2100_ens, zlim = c(0, 1), col = pal1,
@@ -1193,7 +1227,7 @@ ggplot(df_perda_ganho, aes(x = Classe, y = Area_km2, fill = Tipo)) +
     x = "Intervalo de adequabilidade",
     y = expression("Variação de área (km"^2*")")
   ) +
-  coord_cartesian(ylim = c(-33000, 56000)) +
+  coord_cartesian(ylim = c(-40000, 250000)) +
   theme_minimal(base_size = 14) +
   theme(
     legend.position = "top",
