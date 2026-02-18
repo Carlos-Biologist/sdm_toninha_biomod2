@@ -69,6 +69,10 @@
 # ---------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------- #
 
+# Instalar pacotes
+
+#### Comentar sobre os pacotes (onde buscar)
+
 install.packages("raster")     # Leitura, manipulação, análise e visualização de dados raster (camadas ambientais, mapas contínuos, etc.)
 install.packages("tidyverse")  # Conjunto de pacotes para ciência de dados (dplyr, tidyr, ggplot2, readr, etc.)
 install.packages("dplyr")      # Manipulação de dados tabulares: filtrar, selecionar, criar variáveis e resumir dados
@@ -83,6 +87,8 @@ install.packages("sp")         # Estruturas clássicas de dados espaciais (Spati
 install.packages("readxl")     # Leitura de arquivos Excel (.xls e .xlsx)
 install.packages("writexl")    # Escrita de arquivos Excel (.xlsx)
 install.packages(c("sf", "rnaturalearth", "rnaturalearthdata")) # Baixar Shapefiles
+
+# Carregar pacotes
 
 library(rnaturalearth)
 library(rnaturalearthdata)
@@ -107,7 +113,7 @@ pal1 <- c("#3E49BB", "#3498DB", "yellow", "orange", "red", "darkred") # paleta d
 
 # ---------------------------------------------------------------------------- #
 
-# 01. Obter dados presença -----
+# 01. Obter dados presença
 
 # https://www.gbif.org/
 
@@ -159,7 +165,7 @@ g1
 
 names(sp_toninha_full)    # Mostra os nomes das colunas do objeto 'sp_toninha_full'
 sp_toninha_full$country   # Exibe todos os dados baixados por país
-nrow(sp_toninha_full)      #Conta o número de linhas (registros) no dataframe
+nrow(sp_toninha_full)     # Número de registros (observações = linhas)
 
 # ---------------------------------------------------------------------------- #
 
@@ -168,7 +174,7 @@ sp_toninha <- sp_toninha_full %>%
   dplyr::filter(country %in% c("Brazil", "Argentina", "Uruguay")) %>%  # Mantém ocorrências nos países escolhidos
   dplyr::select(lon, lat)                                              # Mantém apenas colunas de interesse
 
-nrow(sp_toninha)  # Número de registros após o filtro
+nrow(sp_toninha)  # Número de registros (observações = linhas)
 
 # ---------------------------------------------------------------------------- #
 
@@ -176,18 +182,21 @@ sp_toninha <- sp_toninha %>%
   distinct() %>%      # Remove registros duplicados
   drop_na()           # Remove registros com valores faltantes
 
-nrow(sp_toninha)      # Conta registros após limpeza
+nrow(sp_toninha)      # Número de registros (observações = linhas)
 
 # ---------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------- #
 
 # 01. Obter mapa da área de estudo (shapefile)
+
 oceano <- ne_download(                          # Baixa dados geográficos do Natural Earth
   scale = 10,                                   # Define a resolução (10 = alta resolução)
   type = "ocean",                               # Tipo de feição: oceanos
   category = "physical",                        # Categoria física (elementos naturais)
   returnclass = "sf"                            # Retorna o objeto no formato sf (simple features)
 )
+
+#### Comentar sobre as funções (onde buscar)
 
 plot(st_geometry(oceano))                       # Plota apenas a geometria do objeto oceano
 
@@ -216,84 +225,94 @@ plot(st_geometry(ocean_crop))                   # Plota o oceano já recortado
 
 axis(2, at = seq(-60, -10, by = 5))             # Adiciona eixo Y com marcações de 5 em 5 graus
 
-axis(1, at = seq(-70, -35, by = 5))        # Adiciona eixo X com marcações de 5 em 5 graus
+axis(1, at = seq(-70, -35, by = 5))             # Adiciona eixo X com marcações de 5 em 5 graus
 
-points(sp_toninha$lon, sp_toninha$lat,     # Plota os pontos de ocorrência
-       pch = 16,                           # Define o símbolo do ponto (círculo sólido)
-       col = "red",                        # Define a cor dos pontos
-       cex = 1)                            # Define o tamanho dos pontos
+points(sp_toninha$lon, sp_toninha$lat,          # Plota os pontos de ocorrência
+       pch = 16,                                # Define o símbolo do ponto (círculo sólido)
+       col = "red",                             # Define a cor dos pontos
+       cex = 1)                                 # Define o tamanho dos pontos
 
 # ---------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------- #
 
-# 03. Obter dados e processar dados ambientais -----
+# 03. Obter dados e processar dados ambientais
 
 # https://www.bio-oracle.org/
+# https://onlinelibrary.wiley.com/doi/full/10.1111/geb.13813
+# https://onlinelibrary.wiley.com/doi/10.1111/j.1466-8238.2011.00656.x
 
 # ---------------------------------------------------------------------------- #
 
-list_layers()                                     # Visualizar a descrição das camadas ambientais
+list_layers()                                      # Visualizar a descrição das camadas ambientais
 
 #list_layers("tas_baseline_2000_2020_depthsurf")   # Listar camada indivídual
 
-camadas <- list_layers()                          # Salvar todas as camadas em uma variável
+camadas <- list_layers()                           # Salvar todas as camadas em uma variável
+write_xlsx(camadas, "informacoes_camadas.xlsx")    # Salvar em .xlsx
 
-write_xlsx(camadas, "informacoes_camadas.xlsx")   # Salvar em .xlsx
-
-info_layer("tas_baseline_2000_2020_depthsurf")    # Informação sobre camadas indivídual
+info_layer("tas_baseline_2000_2020_depthsurf")     # Informação sobre camadas indivídual
 
 # ---------------------------------------------------------------------------- #
 
 chl_baseline_surf <- "chl_baseline_2000_2018_depthsurf" ### mg m-3
 mld_baseline_surf <- "mlotst_baseline_2000_2019_depthsurf" ### m
 tsm_baseline_surf <- "thetao_baseline_2000_2019_depthsurf" ### °C
-sal_baseline_surf <- "so_baseline_2000_2019_depthsurf" ### PSU
+sal_baseline_surf <- "so_baseline_2000_2019_depthsurf" ### -
 swd_baseline_surf <- "swd_baseline_2000_2019_depthsurf" ### Graus
-sws_baseline_surf <- "sws_baseline_2000_2019_depthsurf" ### m s**-1
-produt_baseline_surf <- "phyc_baseline_2000_2020_depthsurf" ### Total Phytoplankton - MMol' 'M-3
+sws_baseline_surf <- "sws_baseline_2000_2019_depthsurf" ### m.s-1
+produt_baseline_surf <- "phyc_baseline_2000_2020_depthsurf" ### Total Phytoplankton - mmol . m-3
 bathy_baseline <- "terrain_characteristics" ### metros  
-iron_baseline_surf <- "dfe_baseline_2000_2018_depthsurf" ###
-nitrate_baseline_surf <- "no3_baseline_2000_2018_depthsurf" ###
-oxygen_baseline_surf <- "o2_baseline_2000_2018_depthsurf" ###
-ph_baseline_surf <- "ph_baseline_2000_2018_depthsurf" ###
-phosphate_baseline_surf <- "po4_baseline_2000_2018_depthsurf" ###
-silicate_baseline_surf <- "si_baseline_2000_2018_depthsurf" ###
+iron_baseline_surf <- "dfe_baseline_2000_2018_depthsurf" ### mmol.m-3
+nitrate_baseline_surf <- "no3_baseline_2000_2018_depthsurf" ### mmol.m-3
+oxygen_baseline_surf <- "o2_baseline_2000_2018_depthsurf" ### mmol.m-3
+ph_baseline_surf <- "ph_baseline_2000_2018_depthsurf" ### -
+phosphate_baseline_surf <- "po4_baseline_2000_2018_depthsurf" ### mmol.m-3
+silicate_baseline_surf <- "si_baseline_2000_2018_depthsurf" ### mmol.m-3
 
-info_layer("chl_baseline_2000_2018_depthsurf")
-info_layer("terrain_characteristics")
+info_layer("chl_baseline_2000_2018_depthsurf") # Informação sobre camadas indivídual
+info_layer("terrain_characteristics")          # Informação sobre camadas indivídual
+
+# "Definir restrições (constraints)" de tempo (time), latitude e longitude. 
+# As restrições devem ser fornecidas como uma lista nomeada contendo pelo menos um dos seguintes itens: 
+# tempo (time), latitude ou longitude.
 
 time_bathy = c('1970-01-01T00:00:00Z', '1970-01-01T00:00:00Z')  # Intervalo temporal da batimetria - variável estática, sem variação temporal real
 time = c('2000-01-01T00:00:00Z', '2000-01-01T00:00:00Z')        # Intervalo temporal das variáveis ambientais
+                                                                # time = c('2010-01-01T00:00:00Z', '2010-01-01T00:00:00Z')
 latitude = c(-60,-10)                                           # Domínio espacial
 longitude = c(-70, -35)                                         # Domínio espacial
 
-# Listas de restrições (constraints) para consulta de dados.
+# Criar as listas de restrições (constraints) para consulta de dados.
 
-constraints_bathy = list(time_bathy, latitude, longitude)
-constraints = list(time, latitude, longitude)
-names(constraints) = c("time", "latitude", "longitude")
-names(constraints_bathy) = c("time", "latitude", "longitude")
+constraints_bathy = list(time_bathy, latitude, longitude)     # Cria uma lista com restrições espaciais/temporais para batimetria
+constraints = list(time, latitude, longitude)                 # Cria outra lista de restrições (tempo + coordenadas)
+names(constraints) = c("time", "latitude", "longitude")       # Define nomes dos elementos da lista 'constraints'
+names(constraints_bathy) = c("time", "latitude", "longitude") # Define nomes dos elementos da lista 'constraints_bathy'
 
-constraints_bathy
-constraints
+constraints_bathy                                             # Mostra o conteúdo da lista de batimetria
+constraints                                                   # Mostra o conteúdo da lista principal
 
-info_layer("chl_baseline_2000_2018_depthsurf")
-info_layer("terrain_characteristics")
+# Selecionar as variáveis (camadas) de interesse
+
+info_layer("chl_baseline_2000_2018_depthsurf") # Informação sobre camadas indivídual
+info_layer("terrain_characteristics")          # Informação sobre camadas indivídual
 
 variables_chl_baseline_surf = c("chl_mean")
+variables_bathy_baseline = c("bathymetry_mean")
 variables_mld_baseline_surf = c("mlotst_mean")
 variables_tsm_baseline_surf = c("thetao_mean")
 variables_sal_baseline_surf = c("so_mean")
 variables_swd_baseline_surf = c("swd_mean")
 variables_sws_baseline_surf = c("sws_mean")
 variables_produt_baseline_surf = c("phyc_mean")
-variables_bathy_baseline = c("bathymetry_mean")
 variables_iron_baseline_surf = c("dfe_mean")
 variables_nitrate_baseline_surf = c("no3_mean")
 variables_oxygen_baseline_surf = c("o2_mean")
 variables_ph_baseline_surf = c("ph_mean")
 variables_phosphate_baseline_surf = c("po4_mean")
 variables_silicate_baseline_surf = c("si_mean")
+
+# Fazer download das camadas ambientais
 
 chl_baseline_surf_2000_2010 <- download_layers(chl_baseline_surf, variables_chl_baseline_surf, constraints)
 mld_baseline_surf_2000_2010 <- download_layers(mld_baseline_surf, variables_mld_baseline_surf, constraints)
@@ -310,9 +329,13 @@ ph_baseline_2000_2010 <- download_layers(ph_baseline_surf, variables_ph_baseline
 phosphate_baseline_2000_2010 <- download_layers(phosphate_baseline_surf, variables_phosphate_baseline_surf, constraints)
 silicate_baseline_2000_2010 <- download_layers(silicate_baseline_surf, variables_silicate_baseline_surf, constraints)
 
-chl_baseline_surf_2000_2010
+chl_baseline_surf_2000_2010 # Visualizar informações das camadas
+bathy_baseline_2000_2010    # Visualizar informações das camadas
 
 # Criar RasterLayer a partir dos SpatRaster
+
+# Compatibilidade entre pacotes no R (Terra e Raster)
+
 chl_surf_raster <- raster(chl_baseline_surf_2000_2010)
 mld_surf_raster <- raster(mld_baseline_surf_2000_2010)
 tsm_surf_raster <- raster(tsm_baseline_surf_2000_2010)
@@ -328,51 +351,79 @@ ph_surf_raster <- raster(ph_baseline_2000_2010)
 phosphate_surf_raster <- raster(phosphate_baseline_2000_2010)
 silicate_surf_raster <- raster(silicate_baseline_2000_2010)
 
+chl_surf_raster # Visualizar informações das camadas Raster
+bathy_raster    # Visualizar informações das camadas Raster
+
+# ---------------------------------------------------------------------------- #
+
+# resolução em graus
+res_grau <- 0.05
+
+# conversão 1 grau -> km
+km_por_grau <- 111
+pixel_km2 <- (res_grau * km_por_grau)^2
+
+pixel_km2
+
+# ---------------------------------------------------------------------------- #
+
 # Empilhar os RasterLayer em um RasterStack
+
 bio <- stack(chl_surf_raster, mld_surf_raster, tsm_surf_raster, sal_surf_raster, swd_surf_raster, sws_surf_raster, 
              produt_surf_raster, bathy_raster, iron_surf_raster, nitrate_surf_raster, phosphate_surf_raster, 
              silicate_surf_raster, ph_surf_raster, oxygen_surf_raster)
 
-print(bio)
+print(bio) # Visualizar informações das camadas Raster empilhadas
 
-plot(bio)
+plot(bio)  # Plotar as camadas Raster
+plot(bio)  # Plotar as camadas Raster
 
 # ---------------------------------------------------------------------------- #
 
-#bio <- crop(bio, oceans_cropped) # recorte da área de estudo
-#bio <- mask(bio, oceans_cropped) # máscara fora da área de estudo
-
-bio <- crop(bio, ocean_crop) # recorte da área de estudo
+#bio <- crop(bio, ocean_crop) # recorte da área de estudo
 bio <- mask(bio, ocean_crop) # máscara fora da área de estudo
 
 names(bio)
 
 # ---------------------------------------------------------------------------- #
+# ---------------------------------------------------------------------------- #
 
-# 04. Extrair valores das variáveis ambientais -----
+# 04. Extrair valores das variáveis ambientais
 
-head(sp_toninha) 
+head(sp_toninha)                                     # Visualizar as 6 primeiras linhas
+nrow(sp_toninha)                                     # Número de registros (observações = linhas)
 
 toninha_var <- raster::extract(bio, sp_toninha)      # Extrair valores das variáveis ambientais
 
-summary(toninha_var)
-nrow(toninha_var)
+summary(toninha_var)                                 # Resumir os dados (quartis)
+
+g1                                                   # Plotar gráfico com pontos de ocorrência
+
+nrow(sp_toninha)                                     # Número de registros (observações = linhas)
+
+# Restaram 103 observações (registros de ocorrência)
 
 # ---------------------------------------------------------------------------- #
 
-head(sp_toninha)
+# Concatenar "sp_toninha e toninha_var"
 
-toninha_concat <- cbind(sp_toninha, toninha_var) # Concatenar "sp_toninha e toninha_var"
+head(toninha_var)                                # Visualizar as 6 primeiras linhas
+head(sp_toninha)                                 # Visualizar as 6 primeiras linhas
 
-summary(toninha_concat)
+toninha_concat <- cbind(sp_toninha, toninha_var) # cbind(): "column bind" = concatenar por colunas
+                                                 # junta objetos lado a lado, e cria uma matriz/data frame com novas colunas
+
+head(toninha_concat)                             # Visualizar as 6 primeiras linhas
+summary(toninha_concat)                          # Resumir os dados (quartis)
 
 # ---------------------------------------------------------------------------- #
+# Excluir NAs
 
-toninha_sem_na <- na.omit(toninha_concat) # Excluir NAs
+toninha_sem_na <- na.omit(toninha_concat) 
 
-str(toninha_sem_na)
+str(toninha_sem_na)         # str() = structure -> mostrar a estrutura interna do objeto
 
-write_xlsx(
+write_xlsx(                 # Salvar objeto em um arquivo .xlsx (excel)
   toninha_sem_na,
   "toninha_sem_na.xlsx"
 )
@@ -382,7 +433,9 @@ write_xlsx(
 # Plotar dois gráficos com os pontos
 par(mfrow = c(1, 2))
 
-plot(st_geometry(ocean_crop), col = "lightblue")
+plot(st_geometry(ocean_crop), 
+     col = "lightblue",
+     main = "Distribuição das ocorrências sem filtragem dos dados")  # Título centralizado
 
 axis(2, at = seq(-60, -10, by = 5))
 axis(1, at = seq(-70, -35, by = 5))
@@ -392,7 +445,9 @@ points(sp_toninha$lon, sp_toninha$lat,
        col = "red",
        cex = 1)
 
-plot(st_geometry(ocean_crop), col = "lightblue")
+plot(st_geometry(ocean_crop), 
+     col = "lightblue",
+     main = "Distribuição das ocorrências com filtragem dos dados")  # Título centralizado
 
 axis(2, at = seq(-60, -10, by = 5))
 axis(1, at = seq(-70, -35, by = 5))
@@ -404,7 +459,7 @@ points(toninha_sem_na$lon, toninha_sem_na$lat,
 
 # ---------------------------------------------------------------------------- #
 
-# Remove os dois pontos indesejados
+# Remove pontos indesejados
 toninha_sem_na <- toninha_sem_na[-c(99), ]
 
 # ---------------------------------------------------------------------------- #
@@ -412,7 +467,9 @@ toninha_sem_na <- toninha_sem_na[-c(99), ]
 # Plotar um gráfico com os pontos
 par(mfrow = c(1, 1))
 
-plot(st_geometry(ocean_crop), col = "lightblue")
+plot(st_geometry(ocean_crop), 
+     col = "lightblue",
+     main = "Distribuição das ocorrências com filtragem dos dados")  # Título centralizado
 
 axis(2, at = seq(-60, -10, by = 5))
 axis(1, at = seq(-70, -35, by = 5))
@@ -424,13 +481,15 @@ points(toninha_sem_na$lon, toninha_sem_na$lat,
 
 # ---------------------------------------------------------------------------- #
 
-nrow(toninha_sem_na)
-nrow(sp_toninha)
-nrow(sp_toninha_full)
+nrow(sp_toninha_full)        # Número de registros (baixadas do GBIF)
+nrow(sp_toninha)             # Número de registros (após primeiras filtragens)
+nrow(toninha_sem_na)         # Número de registros (que iremos modelar)
+
+summary(toninha_sem_na)      # Resumir os dados (quartis)
 
 # ---------------------------------------------------------------------------- #
 
-# 05. Gerar as ausências/pseudoausências -----
+# 05. Gerar as ausências/pseudoausências
 
 # Converter o mapa recortado para sf
 
