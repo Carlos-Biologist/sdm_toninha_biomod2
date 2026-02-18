@@ -489,57 +489,74 @@ summary(toninha_sem_na)      # Resumir os dados (quartis)
 
 # ---------------------------------------------------------------------------- #
 
-# 05. Gerar as ausências/pseudoausências
+# 05. Gerar as ausências/pseudoausências 
 
-# Converter o mapa recortado para sf
+# Calcular distância entre pontos de presença e ausência
+# Pontos de ausência com 2° de distância dos pontos de presença
 
-toninha_pres_sf <- st_as_sf(
-  toninha_sem_na,
-  coords = c("lon", "lat"),
-  crs = 4326 # Sistema de referência de coordenadas usado no mapa (EPSG:4326 = WGS84)
+# Converter o meu dataset (toninha_sem_na) para um objeto espacial do pacote sf
+# Agora cada linha vira um ponto no espaço
+
+toninha_pres_sf <- st_as_sf(      # Converter o meu dataset (toninha_sem_na) para um objeto espacial do pacote sf
+                                  # Agora cada linha vira um ponto no espaço
+  toninha_sem_na,                 # Data frame com os dados de ocorrência
+  coords = c("lon", "lat"),       # Colunas que representam longitude e latitude
+  crs = 4326                      # Sistema de referência de coordenadas usado no mapa (EPSG:4326 = WGS84)
 )
 
-oceans_sf <- st_as_sf(ocean_crop)
+oceans_sf <- st_as_sf(ocean_crop) # Converter o meu mapa (ocean_crop) para um objeto espacial do pacote sf
 
 # ---------------------------------------------------------------------------- #
 
-# Sortear pontos candidatos (mais do que 111!)
+# Sortear pontos candidatos (mais do que 102) -> pontos de ausência com 2° de distância dos pontos de presença
 
-set.seed(123)
+set.seed(123)                          # Reprodutibilisdade
 
-candidatos <- st_sample(
-  ocean_crop,
-  size = 5000,        # quanto maior, melhor
+candidatos_sf <- st_sample(            # Função do pacote sf que  sorteia pontos dentro de uma geometria
+  oceans_sf,                           # Mapa convertido para objeto espacial do pacote sf
+  size = 5000,                         # quanto maior, melhor
   type = "random"
 )
 
-candidatos_sf <- st_as_sf(candidatos)
+#candidatos_sf <- st_as_sf(candidatos)
 
 # ---------------------------------------------------------------------------- #
 
-install.packages("lwgeom")
+#install.packages("lwgeom")   # pacote complementar ao pacote sf, com operações que o sf puro não cobre bem.
 
-library(lwgeom)
+library(lwgeom) 
 
 # Calcular distância até os pontos de presença
-
 dist_matrix <- st_distance(candidatos_sf, toninha_pres_sf)
 
 # distância mínima de cada candidato até qualquer presença
 dist_min <- apply(dist_matrix, 1, min)
 
-# Filtrar pontos com distância ≥ 2°
-ausencias_sf <- candidatos_sf[dist_min >= 2, ]
+# Filtrar pontos com distância ≥ 2° = 222 km
+ausencias_sf_2 <- st_as_sf(candidatos_sf)[dist_min >= 2, ]
+
+ausencias_sf_222 <- st_as_sf(candidatos_sf)[dist_min >= 222, ]
 
 # Selecionar 120 pontos
-if (nrow(ausencias_sf) < 120) {
+if (nrow(ausencias_sf_2) < 120) {
   stop("Poucos pontos disponíveis. Aumente o número de candidatos.")
 }
 
-ausencias_sf <- ausencias_sf %>%
+ausencias_sf_2 <- ausencias_sf_2 %>%
+  slice_sample(n = 102)
+
+# Selecionar 120 pontos
+if (nrow(ausencias_sf_222) < 120) {
+  stop("Poucos pontos disponíveis. Aumente o número de candidatos.")
+}
+
+ausencias_sf_222 <- ausencias_sf_222 %>%
   slice_sample(n = 102)
 
 # ---------------------------------------------------------------------------- #
+
+# Plotar um gráfico com os pontos
+par(mfrow = c(1, 2))
 
 plot(st_geometry(ocean_crop), col = "lightblue")
 
@@ -547,14 +564,15 @@ axis(2, at = seq(-60, -10, by = 5))
 axis(1, at = seq(-70, -35, by = 5))
 
 plot(st_geometry(toninha_pres_sf), add = TRUE, col = "blue", pch = 16)
-plot(st_geometry(ausencias_sf), add = TRUE, col = "red", pch = 16)
+plot(st_geometry(ausencias_sf_2), add = TRUE, col = "red", pch = 16)
 
-# Adicionar eixos y
-valores_y <- c(-10, -15, -20, -25, -30, -35, -40, -45, -50, -55, -60)
-axis(2, at = valores_y)
-# Adicionar eixo x
-valores_x <- c(-70, -65, -60, -55, -50, -45, -40, -35)
-axis(1, at = valores_x)
+plot(st_geometry(ocean_crop), col = "lightblue")
+
+axis(2, at = seq(-60, -10, by = 5))
+axis(1, at = seq(-70, -35, by = 5))
+
+plot(st_geometry(toninha_pres_sf), add = TRUE, col = "blue", pch = 16)
+plot(st_geometry(ausencias_sf_222), add = TRUE, col = "red", pch = 16)
 
 # ---------------------------------------------------------------------------- #
 
