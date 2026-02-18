@@ -431,7 +431,8 @@ write_xlsx(                 # Salvar objeto em um arquivo .xlsx (excel)
 # ---------------------------------------------------------------------------- #
 
 # Plotar dois gráficos com os pontos
-par(mfrow = c(1, 2))
+
+par(mfrow = c(1, 2)) # Layout do gráfico (1 linha, 2 colunas)
 
 plot(st_geometry(ocean_crop), 
      col = "lightblue",
@@ -465,7 +466,7 @@ toninha_sem_na <- toninha_sem_na[-c(99), ]
 # ---------------------------------------------------------------------------- #
 
 # Plotar um gráfico com os pontos
-par(mfrow = c(1, 1))
+par(mfrow = c(1, 1))  # Layout do gráfico (1 linha, 1 colunas)
 
 plot(st_geometry(ocean_crop), 
      col = "lightblue",
@@ -491,8 +492,8 @@ summary(toninha_sem_na)      # Resumir os dados (quartis)
 
 # 05. Gerar as ausências/pseudoausências 
 
-# Calcular distância entre pontos de presença e ausência
-# Pontos de ausência com 2° de distância dos pontos de presença
+# Pontos de ausência com 2° (= 222 km) de distância dos pontos de presença
+# Preciso calcular à distância entre pontos de presença e ausência
 
 # Converter o meu dataset (toninha_sem_na) para um objeto espacial do pacote sf
 # Agora cada linha vira um ponto no espaço
@@ -515,10 +516,8 @@ set.seed(123)                          # Reprodutibilisdade
 candidatos_sf <- st_sample(            # Função do pacote sf que  sorteia pontos dentro de uma geometria
   oceans_sf,                           # Mapa convertido para objeto espacial do pacote sf
   size = 5000,                         # quanto maior, melhor
-  type = "random"
+  type = "random"                      # Sortear de forma randômica/aleatória
 )
-
-#candidatos_sf <- st_as_sf(candidatos)
 
 # ---------------------------------------------------------------------------- #
 
@@ -529,34 +528,20 @@ library(lwgeom)
 # Calcular distância até os pontos de presença
 dist_matrix <- st_distance(candidatos_sf, toninha_pres_sf)
 
-# distância mínima de cada candidato até qualquer presença
+head(dist_matrix) # Visualizar as 6 primeiras linhas
+
+# Distância mínima de cada candidato até qualquer presença
 dist_min <- apply(dist_matrix, 1, min)
 
 # Filtrar pontos com distância ≥ 2° = 222 km
-ausencias_sf_2 <- st_as_sf(candidatos_sf)[dist_min >= 2, ]
+ausencias_sf <- st_as_sf(candidatos_sf)[dist_min >= 222000, ]
 
-ausencias_sf_222 <- st_as_sf(candidatos_sf)[dist_min >= 222, ]
-
-# Selecionar 120 pontos
-if (nrow(ausencias_sf_2) < 120) {
-  stop("Poucos pontos disponíveis. Aumente o número de candidatos.")
-}
-
-ausencias_sf_2 <- ausencias_sf_2 %>%
-  slice_sample(n = 102)
-
-# Selecionar 120 pontos
-if (nrow(ausencias_sf_222) < 120) {
-  stop("Poucos pontos disponíveis. Aumente o número de candidatos.")
-}
-
-ausencias_sf_222 <- ausencias_sf_222 %>%
-  slice_sample(n = 102)
+ausencias_sf <- ausencias_sf %>%   
+  slice_sample(n = 120) # Sortear 120 pontos para evitar NAs
 
 # ---------------------------------------------------------------------------- #
 
 # Plotar um gráfico com os pontos
-par(mfrow = c(1, 2))
 
 plot(st_geometry(ocean_crop), col = "lightblue")
 
@@ -564,15 +549,7 @@ axis(2, at = seq(-60, -10, by = 5))
 axis(1, at = seq(-70, -35, by = 5))
 
 plot(st_geometry(toninha_pres_sf), add = TRUE, col = "blue", pch = 16)
-plot(st_geometry(ausencias_sf_2), add = TRUE, col = "red", pch = 16)
-
-plot(st_geometry(ocean_crop), col = "lightblue")
-
-axis(2, at = seq(-60, -10, by = 5))
-axis(1, at = seq(-70, -35, by = 5))
-
-plot(st_geometry(toninha_pres_sf), add = TRUE, col = "blue", pch = 16)
-plot(st_geometry(ausencias_sf_222), add = TRUE, col = "red", pch = 16)
+plot(st_geometry(ausencias_sf_102), add = TRUE, col = "red", pch = 16)
 
 # ---------------------------------------------------------------------------- #
 
@@ -581,79 +558,83 @@ ausencias_df <- ausencias_sf %>%
   st_coordinates() %>%
   as.data.frame()
 
-colnames(ausencias_df) <- c("lon", "lat")
+colnames(ausencias_df) <- c("lon", "lat") # Renomear as colunas Lon e Lat
 
 # ---------------------------------------------------------------------------- #
 
-# Extrair valores das variaveis de ausência
+# Extrair valores das variaveis (camadas) de ausência
 
 toninha_ausencias <- raster::extract(bio, ausencias_sf)
 
-summary(toninha_ausencias)
+summary(toninha_ausencias) # verificar se tem NAs
 
 # ---------------------------------------------------------------------------- #
 
 # Inserir coluna "species" com valor 0 para ausência e coluna "lon" e "lat" 
 
-toninha_ausencias_df <- cbind(
+toninha_ausencias <- cbind(
   species = 0,
   ausencias_df[, c("lon", "lat")],
   toninha_ausencias
 )
 
-str(toninha_ausencias_df)
+str(toninha_ausencias) # str() = structure -> mostrar a estrutura interna do objeto
 
 # ---------------------------------------------------------------------------- #
 
-#toninha_ausencias_df <- na.omit(as.data.frame(toninha_ausencias_df))
+# Se tiver NAs, excluir as linhas com dados faltantes.
+# Verificar se vai ter dados suficientes para igualar aos pontos de presença
 
-#str(toninha_ausencias_df)
+toninha_ausencias <- na.omit(toninha_ausencias)           # Excluir linhas com NAs
+
+nrow(toninha_ausencias)                                   # Número de registros (observações = linhas)
 
 # ---------------------------------------------------------------------------- #
 
-# Define semente para reprodutibilidade (opcional)
-set.seed(123)
+# Sortear o número de ausências correspondente ao número de presença
 
-# Sorteia 5 linhas aleatórias para remover
-linhas_remover <- sample(seq_len(nrow(toninha_ausencias_df)), 9)
+toninha_ausencias <- toninha_ausencias %>%   
+  slice_sample(n = 102)                     # Sortear 102 pontos
 
-# Remove as linhas sorteadas
-toninha_ausencias_df <- toninha_ausencias_df[-linhas_remover, ]
-
-str(toninha_ausencias_df)
+nrow(toninha_ausencias)                     # Número de registros (observações = linhas)
 
 # ---------------------------------------------------------------------------- #
 
 # Concatenar dados de presença e ausências 
 
-colnames(toninha_ausencias_df)
-colnames(toninha_sem_na)
+colnames(toninha_ausencias) # Visualizar nomes das colunas
+colnames(toninha_sem_na)    # Visualizar nomes das colunas
 
 # Inserir coluna "species" com valor 0 para ausência e coluna "lon" e "lat" 
 
-toninha_sem_na <- cbind(
+toninha_sem_na <- cbind(    # cbind(): "column bind" = concatenar por colunas
+                            # junta objetos lado a lado, e cria uma matriz/data frame com novas colunas
   species = 1,
   toninha_sem_na
 )
 
-colnames(toninha_ausencias_df)
+colnames(toninha_ausencias)
 colnames(toninha_sem_na)
 
 # ---------------------------------------------------------------------------- #
 
-# Concatenar
+# Concatenar por linha
 
-toninha_final <- rbind(
+toninha_final <- rbind(          # row bind = concatena por linhas
+                                 # empilha objetos um embaixo do outro, e cria uma matriz/data frame com novas linhas
   toninha_sem_na,
-  toninha_ausencias_df
+  toninha_ausencias
 )
 
-str(toninha_final)
+str(toninha_final)               # str() = structure -> mostrar a estrutura interna do objeto
+summary(toninha_final)           # Resumir os dados (quartis)
 
 # ---------------------------------------------------------------------------- #
 
 # Visualização base
-plot(st_geometry(ocean_crop), col = "lightblue")
+plot(st_geometry(ocean_crop), 
+     col = "lightblue",
+     main = "Distribuição dos pontos de presença e ausência/pseudo-ausência")  # Título centralizado)
 
 axis(2, at = seq(-60, -10, by = 5))
 axis(1, at = seq(-70, -35, by = 5))
@@ -672,6 +653,7 @@ points(
 
 # ---------------------------------------------------------------------------- #
 
+# Salvar em um arquivo .xlsx
 write_xlsx(
   toninha_final,
   path = "dados_toninha_final.xlsx"
@@ -689,7 +671,7 @@ toninha_colin <- toninha_final %>%
 
 pairs.panels(
   toninha_colin,
-  cex = 10,        # tamanho geral da fonte (números, correlações)
+  cex = 6,        # tamanho geral da fonte (números, correlações)
   cex.labels = 1.5 # tamanho dos nomes das variáveis
 )
 
@@ -714,24 +696,25 @@ summary(toninha_colin)
 
 # ---------------------------------------------------------------------------- #
 
-# Nome da espécie
+# Nome da coluna de presença da espécie (variável de resposta)
 myResp <- toninha_colin$species
 myRespName <- "species"
 
-# Coordenadas (data.frame simples)
+# Coordenadas
 myRespXY <- toninha_colin[, c("lon", "lat")]
 
 # ---------------------------------------------------------------------------- #
 
-# Dados ambientais -----
+# Dados ambientais (variáveis preditoras)
 
 # Empilhar os RasterLayer em um RasterStack
-bio_colin <- stack(chl_surf_raster, tsm_surf_raster, sal_surf_raster, swd_surf_raster, sws_surf_raster, bathy_raster, silicate_surf_raster)
-
-# Converter Brick → Stack
-bio_colin <- raster::stack(bio_colin)
+bio_colin <- stack(chl_surf_raster, tsm_surf_raster, sal_surf_raster, swd_surf_raster, 
+                   sws_surf_raster, bathy_raster, silicate_surf_raster)
 
 bio_colin
+
+# Converter Brick → Stack
+#bio_colin <- raster::stack(bio_colin)
 
 # ---------------------------------------------------------------------------- #
 
@@ -747,7 +730,6 @@ myBiomodData <- BIOMOD_FormatingData(
 myBiomodData
 myBiomodData@coord
 head(myBiomodData@data.env.var)
-#plot(myBiomodData)
 
 # ---------------------------------------------------------------------------- #
 
@@ -756,7 +738,7 @@ ModelsTable # Visualizar algoritmos
 #allModels <- c('ANN', 'CTA', 'DNN', 'FDA', 'GAM', 'GBM', 'GLM', 'MARS'
 #               , 'MAXENT', 'MAXNET', 'RF', 'RFd', 'SRE', 'XGBOOST')
 
-allModels <- c('GAM', 'GLM', 'RF', 'XGBOOST', 'MAXENT')
+allModels <- c('GAM', 'GLM', 'RF')
 
 toninha_opt <- bm_ModelingOptions(
   data.type = 'binary',
@@ -768,7 +750,7 @@ toninha_opt <- bm_ModelingOptions(
 toninha_model <- BIOMOD_Modeling(
   bm.format    = myBiomodData,
   modeling.id = 'AllModels',
-  models      = c('GAM','GLM','RF','XGBOOST', 'MAXENT'),
+  models      = c('GAM','GLM','RF'),
   CV.strategy = 'block',    # validação cruzada espacial (em blocos)
   CV.perc     = 0.7,
   OPT.strategy = 'default',
