@@ -60,15 +60,6 @@
 # ---------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------- #
 
-# Vídeo-aula 2 - "Instalar" e carregar os pacotes
-#              - Extrair os pontos de ocorrência da toninha (Pontoporia blainvillei)
-#              - GBIF (Global Biodiversity Information Facility)
-#              - Tratar (selecionar) os melhores pontos (até o momento).
-#              - Visualizar esse pontos
-
-# ---------------------------------------------------------------------------- #
-# ---------------------------------------------------------------------------- #
-
 # Instalar pacotes
 
 #### Comentar sobre os pacotes (onde buscar)
@@ -217,11 +208,14 @@ bbox_sf <- st_as_sfc(bbox)                      # Converte o bounding box em obj
                                                 # transforma o bounding box em um polígono espacial no mapa 
                                                 # e não apenas um retângilo números.
 
-#sf::sf_use_s2(FALSE)                            # Desativa o motor esférico S2 para operações espaciais
+sf::sf_use_s2(FALSE)                            # Desativa o motor esférico S2 para operações espaciais
+                                                # Todas as operações espaciais do pacote sf passam a ser planas, 
+                                                # ou seja, consideram o plano cartesiano, sem levar em conta a curvatura da Terra
 
 ocean_crop <- st_intersection(oceano, bbox_sf)  # Recorta o oceano usando o bounding box
 
-plot(st_geometry(ocean_crop))                   # Plota o oceano já recortado
+plot(st_geometry(ocean_crop), 
+     col = "lightblue")                         # Plota o oceano já recortado
 
 axis(2, at = seq(-60, -10, by = 5))             # Adiciona eixo Y com marcações de 5 em 5 graus
 
@@ -245,14 +239,17 @@ points(sp_toninha$lon, sp_toninha$lat,          # Plota os pontos de ocorrência
 
 list_layers()                                      # Visualizar a descrição das camadas ambientais
 
-#list_layers("tas_baseline_2000_2020_depthsurf")   # Listar camada indivídual
+list_layers("tas_baseline_2000_2020_depthsurf")    # Listar camada indivídual
 
 camadas <- list_layers()                           # Salvar todas as camadas em uma variável
+
 write_xlsx(camadas, "informacoes_camadas.xlsx")    # Salvar em .xlsx
 
-info_layer("tas_baseline_2000_2020_depthsurf")     # Informação sobre camadas indivídual
+info_layer("chl_baseline_2000_2018_depthsurf")     # Informação sobre camadas indivídual
 
 # ---------------------------------------------------------------------------- #
+
+# Criar as variáveis
 
 chl_baseline_surf <- "chl_baseline_2000_2018_depthsurf" ### mg m-3
 mld_baseline_surf <- "mlotst_baseline_2000_2019_depthsurf" ### m
@@ -269,12 +266,12 @@ ph_baseline_surf <- "ph_baseline_2000_2018_depthsurf" ### -
 phosphate_baseline_surf <- "po4_baseline_2000_2018_depthsurf" ### mmol.m-3
 silicate_baseline_surf <- "si_baseline_2000_2018_depthsurf" ### mmol.m-3
 
-info_layer("chl_baseline_2000_2018_depthsurf") # Informação sobre camadas indivídual
-info_layer("terrain_characteristics")          # Informação sobre camadas indivídual
-
 # "Definir restrições (constraints)" de tempo (time), latitude e longitude. 
 # As restrições devem ser fornecidas como uma lista nomeada contendo pelo menos um dos seguintes itens: 
 # tempo (time), latitude ou longitude.
+
+info_layer("terrain_characteristics")          # Informação sobre camadas indivídual
+info_layer("chl_baseline_2000_2018_depthsurf") # Informação sobre camadas indivídual
 
 time_bathy = c('1970-01-01T00:00:00Z', '1970-01-01T00:00:00Z')  # Intervalo temporal da batimetria - variável estática, sem variação temporal real
 time = c('2000-01-01T00:00:00Z', '2000-01-01T00:00:00Z')        # Intervalo temporal das variáveis ambientais
@@ -284,10 +281,10 @@ longitude = c(-70, -35)                                         # Domínio espac
 
 # Criar as listas de restrições (constraints) para consulta de dados.
 
-constraints_bathy = list(time_bathy, latitude, longitude)     # Cria uma lista com restrições espaciais/temporais para batimetria
-constraints = list(time, latitude, longitude)                 # Cria outra lista de restrições (tempo + coordenadas)
-names(constraints) = c("time", "latitude", "longitude")       # Define nomes dos elementos da lista 'constraints'
-names(constraints_bathy) = c("time", "latitude", "longitude") # Define nomes dos elementos da lista 'constraints_bathy'
+constraints_bathy = list(time_bathy, latitude, longitude)     # Criar uma lista com restrições espaciais/temporais para batimetria
+constraints = list(time, latitude, longitude)                 # Criar outra lista de restrições (tempo + coordenadas)
+names(constraints) = c("time", "latitude", "longitude")       # Definir nomes dos elementos da lista 'constraints'
+names(constraints_bathy) = c("time", "latitude", "longitude") # Definir nomes dos elementos da lista 'constraints_bathy'
 
 constraints_bathy                                             # Mostra o conteúdo da lista de batimetria
 constraints                                                   # Mostra o conteúdo da lista principal
@@ -334,7 +331,7 @@ bathy_baseline_2000_2010    # Visualizar informações das camadas
 
 # Criar RasterLayer a partir dos SpatRaster
 
-# Compatibilidade entre pacotes no R (Terra e Raster)
+# Incompatibilidade entre pacotes no R (Terra e Raster)
 
 chl_surf_raster <- raster(chl_baseline_surf_2000_2010)
 mld_surf_raster <- raster(mld_baseline_surf_2000_2010)
@@ -368,15 +365,16 @@ pixel_km2
 # ---------------------------------------------------------------------------- #
 
 # Empilhar os RasterLayer em um RasterStack
+# RasterStack é como uma pilha de camadas, mas todas com mesma extensão e resolução espacial.
 
 bio <- stack(chl_surf_raster, mld_surf_raster, tsm_surf_raster, sal_surf_raster, swd_surf_raster, sws_surf_raster, 
              produt_surf_raster, bathy_raster, iron_surf_raster, nitrate_surf_raster, phosphate_surf_raster, 
              silicate_surf_raster, ph_surf_raster, oxygen_surf_raster)
 
-print(bio) # Visualizar informações das camadas Raster empilhadas
+print(bio)         # Visualizar informações das camadas Raster empilhadas
 
-plot(bio)  # Plotar as camadas Raster
-plot(bio)  # Plotar as camadas Raster
+plot(bio)          # Plotar as camadas Raster
+plot(bio[[8]])     # Plotar camada indivídual
 
 # ---------------------------------------------------------------------------- #
 
@@ -391,15 +389,13 @@ names(bio)
 # 04. Extrair valores das variáveis ambientais
 
 head(sp_toninha)                                     # Visualizar as 6 primeiras linhas
-nrow(sp_toninha)                                     # Número de registros (observações = linhas)
 
 toninha_var <- raster::extract(bio, sp_toninha)      # Extrair valores das variáveis ambientais
 
 summary(toninha_var)                                 # Resumir os dados (quartis)
+nrow(sp_toninha)                                     # Número de registros (observações = linhas)
 
 g1                                                   # Plotar gráfico com pontos de ocorrência
-
-nrow(sp_toninha)                                     # Número de registros (observações = linhas)
 
 # Restaram 103 observações (registros de ocorrência)
 
@@ -549,7 +545,7 @@ axis(2, at = seq(-60, -10, by = 5))
 axis(1, at = seq(-70, -35, by = 5))
 
 plot(st_geometry(toninha_pres_sf), add = TRUE, col = "blue", pch = 16)
-plot(st_geometry(ausencias_sf_102), add = TRUE, col = "red", pch = 16)
+plot(st_geometry(ausencias_sf), add = TRUE, col = "red", pch = 16)
 
 # ---------------------------------------------------------------------------- #
 
@@ -605,7 +601,7 @@ nrow(toninha_ausencias)                     # Número de registros (observaçõe
 colnames(toninha_ausencias) # Visualizar nomes das colunas
 colnames(toninha_sem_na)    # Visualizar nomes das colunas
 
-# Inserir coluna "species" com valor 0 para ausência e coluna "lon" e "lat" 
+# Inserir coluna "species" com valor 1 para presença 
 
 toninha_sem_na <- cbind(    # cbind(): "column bind" = concatenar por colunas
                             # junta objetos lado a lado, e cria uma matriz/data frame com novas colunas
@@ -620,7 +616,7 @@ colnames(toninha_sem_na)
 
 # Concatenar por linha
 
-toninha_final <- rbind(          # row bind = concatena por linhas
+toninha_final <- rbind(          # row bind = concatenar por linhas
                                  # empilha objetos um embaixo do outro, e cria uma matriz/data frame com novas linhas
   toninha_sem_na,
   toninha_ausencias
@@ -631,7 +627,7 @@ summary(toninha_final)           # Resumir os dados (quartis)
 
 # ---------------------------------------------------------------------------- #
 
-# Visualização base
+# Visualização mapa
 plot(st_geometry(ocean_crop), 
      col = "lightblue",
      main = "Distribuição dos pontos de presença e ausência/pseudo-ausência")  # Título centralizado)
@@ -677,13 +673,13 @@ pairs.panels(
 
 # ---------------------------------------------------------------------------- #
 
-# 07. Rodar SDM Biomod2 - Atual -----
+# 07. Rodar SDM Biomod2 - Atual
 
 # https://cran.r-project.org/web/packages/biomod2/biomod2.pdf
 
 # ---------------------------------------------------------------------------- #
 
-# Dados de presença / ausência -----
+# Dados de presença / ausência
 
 toninha_final <- read_xlsx("dados_toninha_final.xlsx")
 
@@ -692,16 +688,19 @@ toninha_colin <- toninha_final %>%
 
 # Checagens básicas
 str(toninha_colin)
-summary(toninha_colin)
 
 # ---------------------------------------------------------------------------- #
 
-# Nome da coluna de presença da espécie (variável de resposta)
+# Variável de resposta -> nome da coluna onde os dados de presença e ausência da espécie estão.
 myResp <- toninha_colin$species
 myRespName <- "species"
 
+myResp
+
 # Coordenadas
 myRespXY <- toninha_colin[, c("lon", "lat")]
+
+head(myRespXY)
 
 # ---------------------------------------------------------------------------- #
 
@@ -713,23 +712,45 @@ bio_colin <- stack(chl_surf_raster, tsm_surf_raster, sal_surf_raster, swd_surf_r
 
 bio_colin
 
-# Converter Brick → Stack
-#bio_colin <- raster::stack(bio_colin)
-
 # ---------------------------------------------------------------------------- #
 
-# Formatação BIOMOD (com ausências reais) -----
+# Formatar os dados antes de rodar os modelos de SDMs
+# Organiza as variáveis dependentes (presença/ausência), as camadas ambientais preditoras, 
+# e as coordenadas em um formato que o BIOMOD2 entenda.
 
 myBiomodData <- BIOMOD_FormatingData(
   resp.var  = myResp,              # ✅ vetor 0/1
   expl.var  = bio_colin,
   resp.xy   = myRespXY,
-  resp.name = myRespName
+  resp.name = myRespName,
+  filter.raster = TRUE
 )
 
 myBiomodData
-myBiomodData@coord
-head(myBiomodData@data.env.var)
+
+# ---------------------------------------------------------------------------- #
+
+set.seed(123)  # para reprodutibilidade
+
+# Identificar índices das ausências
+absence_idx <- which(myResp == 0)
+
+# Selecionar aleatoriamente 21 índices para remover
+remove_idx <- sample(absence_idx, size = 21, replace = FALSE)
+
+# Criar novos vetores sem esses pontos
+myResp_new <- myResp[-remove_idx]
+myRespXY_new <- myRespXY[-remove_idx, ]
+
+myBiomodData_final <- BIOMOD_FormatingData(
+  resp.var  = myResp_new,         # vetor atualizado com 21 ausências a menos
+  expl.var  = bio_colin,          # mesmo RasterStack de variáveis ambientais
+  resp.xy   = myRespXY_new,       # coordenadas correspondentes
+  resp.name = myRespName,
+  filter.raster = TRUE            # manter o filtro para evitar duplicatas
+)
+
+myBiomodData_final
 
 # ---------------------------------------------------------------------------- #
 
@@ -738,41 +759,48 @@ ModelsTable # Visualizar algoritmos
 #allModels <- c('ANN', 'CTA', 'DNN', 'FDA', 'GAM', 'GBM', 'GLM', 'MARS'
 #               , 'MAXENT', 'MAXNET', 'RF', 'RFd', 'SRE', 'XGBOOST')
 
-allModels <- c('GAM', 'GLM', 'RF')
+allModels <- c('GAM', 'GLM', 'RF', 'XGBOOST')
+
+# Definir objeto de opções de modelagem (tipos de dados, modelos e estratégias), que será usado em BIOMOD_Modeling
 
 toninha_opt <- bm_ModelingOptions(
-  data.type = 'binary',
-  models = allModels,
-  strategy = 'default',
-  bm.format = myBiomodData
+  data.type = 'binary',            # Define que a variável resposta é binária (0/1)
+  models = allModels,              # Seleciona quais algoritmos/modelos serão considerados
+  strategy = 'default',            # Define a estratégia de parametrização padrão para os modelos
+  bm.format = myBiomodData_final   # Usa os dados formatados anteriormente (presenças/ausências + preditores)
 )
 
+# Treinar os modelos de SDM usando os dados formatados no código anterior.
+# Quais algoritmos usar? Como dividir os dados para validação cruzada? Quais métricas avaliar? 
+# Como calcular importância das variáveis? Controle de aleatoriedade para reproduzir resultados.
+
 toninha_model <- BIOMOD_Modeling(
-  bm.format    = myBiomodData,
-  modeling.id = 'AllModels',
-  models      = c('GAM','GLM','RF'),
-  CV.strategy = 'block',    # validação cruzada espacial (em blocos)
-  CV.perc     = 0.7,
-  OPT.strategy = 'default',
-  metric.eval = c('TSS','AUCroc'),
-  var.import  = 3,
-  seed.val    = 42
+  bm.format    = myBiomodData_final,               # O objeto com dados de presenças/ausências e variáveis ambientais
+  modeling.id  = 'AllModels',                      # Nome identificador da modelagem, usado para salvar resultados
+  models       = c('GAM','GLM','RF', 'XGBOOST'),   # Escolhe os modelos que serão treinados
+  CV.strategy  = 'block',                          # Define a validação cruzada espacial em blocos
+  CV.perc      = 0.7,                              # Proporção do conjunto de treino (70%) em cada bloco
+  OPT.strategy = 'default',                        # Estratégia padrão de otimização dos parâmetros
+  metric.eval  = c('TSS','AUCroc'),                # Métricas usadas para avaliar o desempenho dos modelos
+  var.import   = 3,                                # Número de permutações para calcular a importância de cada variável
+  seed.val     = 42                                # Semente para aleatoriedade, garantindo que resultados sejam reprodutíveis
 )
 
 # ---------------------------------------------------------------------------- #
 
 # Obter scores de avaliação e importância das variáveis
 
-bm_PlotEvalMean(
-  toninha_model,
-  metric.eval = c('TSS','AUCroc'),
-  dataset = "validation",
-  group.by = "algo",
-  do.plot = TRUE
+scores <- bm_PlotEvalMean(
+  toninha_model,                    # O objeto de modelagem que contém os modelos treinados
+  metric.eval = c('TSS','AUCroc'),  # Métricas de avaliação a serem exibidas: TSS (True Skill Statistic) e AUC (Area Under the Curve)
+  dataset = "validation",           # Indica que a avaliação será feita sobre o conjunto de validação (não treino)
+  group.by = "algo",                # Agrupa os resultados por algoritmo/modelo (ex.: separa GAM, GLM, RF, XGBoost)
+  do.plot = TRUE                    # Define que o gráfico será gerado automaticamente
 )
 
 # ---------------------------------------------------------------------------- #
 
+# Calcula a importância de cada variável
 toninha_model_var_imp <- get_variables_importance(toninha_model)
 
 # Calcula a média da importância das variáveis pelas colunas "expl.var"
@@ -781,7 +809,7 @@ mean_var_imp <- aggregate(var.imp ~ expl.var, data = toninha_model_var_imp, FUN 
 # Exibe o resultado
 print(mean_var_imp)
 
-# Ordena o dataframe mean_var_imp do mais importante para o menos importante
+# Ordena do mais importante para o menos importante
 mean_var_imp <- mean_var_imp[order(mean_var_imp$var.imp, decreasing = TRUE), ]
 
 # Gera o gráfico de barras invertido
@@ -791,56 +819,72 @@ barplot(mean_var_imp$var.imp, names.arg = mean_var_imp$expl.var,
 
 # ---------------------------------------------------------------------------- #
 
-## then call Projection function
-toninha_projection <- BIOMOD_Projection(toninha_model,
-                                        new.env = bio_colin,
-                                        proj.name = 'current_new',
-                                        selected.models = 'all',
-                                        compress = FALSE,
-                                        build.clamping.mask = FALSE)
+# Projetar os modelos treinados em um novo conjunto de variáveis ambientais. 
+# Gerando os mapas de adequabilidade ambiental para cada algoritmo.
+
+toninha_projection <- BIOMOD_Projection(
+  toninha_model,                   # O objeto de modelos treinados
+  new.env = bio_colin,             # O conjunto de variáveis ambientais para projeção
+  proj.name = 'current_new',       # Nome da projeção, usado para salvar resultados e identificar cenários
+  selected.models = 'all',         # Indica que todos os modelos treinados serão projetados
+  compress = FALSE,                # Não comprime os arquivos raster gerados (FALSE = mais fácil de acessar, maior tamanho)
+  build.clamping.mask = FALSE      # Não cria máscara de clamping; normalmente usado para mostrar onde os valores extrapolam os limites do treino
+)
+
+# Plota as projeções de todos os modelos
+plot(toninha_projection)
+
+# Plotar scores de avaliação e importância das variáveis 
+scores 
 
 # ---------------------------------------------------------------------------- #
 
-mods <- get_built_models(toninha_model)
+# Extrai os nomes ou identificadores de todos os modelos que foram construídos no objeto toninha_model
+# (ex.: "GAM", "GLM", "RF", "XGBoost") para usar na modelagem ensemble
+
+mods <- get_built_models(toninha_model)  
 
 toninha_ens <- BIOMOD_EnsembleModeling(
-  toninha_model,
-  models.chosen = mods,
-  em.by = "all",
-  em.algo = c('EMmean'),
-  metric.select = c('TSS'),
-  metric.select.thresh = c(0.8),
-  metric.eval = c("TSS"),
-  var.import = 5,
-  EMci.alpha = 0.05,
-  EMwmean.decay = "proportional",
-  nb.cpu = 1,
-  seed.val = 123,
-  do.progress = TRUE,
+  toninha_model,                                     # Objeto com os modelos individuais já treinados
+  models.chosen = mods,                              # Seleciona os modelos que serão combinados no ensemble
+  em.by = "all",                                     # Cria o ensemble usando todos os modelos disponíveis
+  em.algo = c('EMmean'),                             # Algoritmo de ensemble: EMmean = média simples das probabilidades dos modelos
+  metric.select = c('TSS', 'AUCroc'),                # Métrica usada para selecionar modelos que entram no ensemble
+  metric.select.thresh = c(0.8, 0.8),                     # Apenas modelos com TSS e AUCroc >= 0.8 são incluídos no ensemble
+  metric.eval = c("TSS", 'AUCroc'),                  # Métrica usada para avaliação do ensemble
+  var.import = 3,                                    # Número de permutações para calcular a importância das variáveis no ensemble
+  EMci.alpha = 0.05,                                 # Nível de significância para o cálculo do intervalo de confiança do ensemble
+  EMwmean.decay = "proportional",                    # Define o peso proporcional na média ponderada (aqui usado em EMmean, mesmo que não ponderado)
+  nb.cpu = 1,                                        # Número de CPUs para rodar em paralelo (1 = sem paralelização)
+  seed.val = 123,                                    # Semente para reprodutibilidade do ensemble
+  do.progress = TRUE                                 # Mostra barra de progresso durante o cálculo
 )
 
 # ---------------------------------------------------------------------------- #
 
-rcurve_toninha_ens <- 
-  bm_PlotResponseCurves(
-    toninha_ens,
-    models.chosen = get_built_models(toninha_ens),
-    new.env = get_formal_data(toninha_ens, "expl.var"),
-    show.variables = get_formal_data(toninha_ens, "expl.var.names"),
-    do.bivariate = FALSE,
-    fixed.var = "mean",
-    do.plot = TRUE,
-    do.progress = TRUE)
+# Gerar curva de resposta
 
-# Get evaluation scores & variables importance
-get_evaluations(toninha_ens)
+rcurve_toninha_ens <-                                                 # Cria um objeto para armazenar as curvas de resposta do ensemble
+  bm_PlotResponseCurves(                                              # Função que gera curvas de resposta dos modelos
+    toninha_ens,                                                      # Objeto do modelo ensemble previamente construído
+    models.chosen = get_built_models(toninha_ens),                    # Seleciona todos os modelos que foram efetivamente construídos no ensemble
+    new.env = get_formal_data(toninha_ens, "expl.var"),               # Usa as variáveis ambientais originais para gerar as curvas
+    show.variables = get_formal_data(toninha_ens, "expl.var.names"),  # Define que todas as variáveis explicativas serão exibidas
+    do.bivariate = FALSE,                                             # Gera curvas univariadas (uma variável por vez, sem interações)
+    fixed.var = "mean",                                               # Mantém as demais variáveis fixas na média ao calcular cada curva
+    do.plot = TRUE,                                                   # Exibe os gráficos automaticamente
+    do.progress = TRUE)                                               # Mostra barra de progresso durante o processamento
 
-get_variables_importance(toninha_ens)
+# Extrai as métricas de avaliação do modelo ensemble (ex: TSS, AUCroc)
+#get_evaluations(toninha_ens)
 
-# # Represent variables importance
+# Obtém a importância das variáveis ambientais no modelo ensemble
+#get_variables_importance(toninha_ens)
+
+# Gera boxplots da importância das variáveis
 bm_PlotVarImpBoxplot(bm.out = toninha_ens, group.by = c('expl.var', 'algo', 'algo'))
 
-# Caminho para o arquivo
+# Caminho para o arquivo para mapa de adequabilidade sem emsemble
 caminho_arquivo <- "C:/Cursos/Modelagem/Vídeo-aula/sdm_toninha_biomod2/species/proj_current_new/proj_current_new_species.tif"
 
 # Carregar a imagem TIFF
@@ -852,17 +896,25 @@ plot(imagem_tiff, col = pal1)
 atual <- imagem_tiff / 1000
 
 # Visualizar a imagem
-plot(atual, col = pal1)
+plot(atual, 
+     col = pal1, 
+     zlim = c(0, 1),   # Força a escala da legenda de 0 a 1
+     main = "Adequabilidade Atual Sem Ensemble")
 
 # ---------------------------------------------------------------------------- #
 
-toninha_ens_ens <- BIOMOD_EnsembleForecasting(toninha_ens,
-                                              projection.output = toninha_projection,
-                                              new.env = bio_colin,
-                                              selected.models = 'all',
-                                              proj.name = "ensemble_new_current",
-                                              binary.meth = "TSS")
-# Caminho para o arquivo
+# Projetar o modelo emsemble em um novo conjunto de variáveis ambientais. 
+# Gerar os mapas de adequabilidade ambiental para cada algoritmo (Ensemble).
+
+toninha_ens_ens <- BIOMOD_EnsembleForecasting(     # Executa a projeção (forecast) do modelo ensemble
+  toninha_ens,                                     # Objeto do ensemble previamente construído
+  projection.output = toninha_projection,          # Usa as projeções individuais já geradas anteriormente
+  new.env = bio_colin,                             # Conjunto de variáveis ambientais onde a projeção será aplicada
+  selected.models = 'all',                         # Utiliza todos os modelos disponíveis dentro do ensemble
+  proj.name = "ensemble_new_current",              # Nome dado ao arquivo/objeto de projeção do ensemble
+  binary.meth = "TSS")                             # Gera também mapa binário (presença/ausência) usando limiar baseado em TSS
+
+# Caminho para o arquivo para mapa de adequabilidade com emsemble
 caminho_arquivo_ens <- "C:/Cursos/Modelagem/Vídeo-aula/sdm_toninha_biomod2/species/proj_ensemble_new_current/proj_ensemble_new_current_species_ensemble.tif"
 
 # Carregar a imagem TIFF
@@ -873,20 +925,32 @@ plot(imagem_tiff_ens, col = pal1)
 
 atual_ens <- imagem_tiff_ens / 1000
 
-# Visualizar a imagem
-plot(atual_ens, col = pal1)
+par(mfrow = c(1, 2))              # Divide a área de plotagem em 1 linha e 2 colunas
+
+plot(atual, 
+     col = pal1, 
+     zlim = c(0, 1),   # Escala da legenda de 0 a 1
+     main = "Adequabilidade Atual Sem Ensemble")
+
+plot(atual_ens, 
+     col = pal1, 
+     zlim = c(0, 1),   # Mesma escala para permitir comparação direta
+     main = "Adequabilidade Atual com Ensemble")
+
+par(mfrow = c(1, 1))              # Retorna o padrão original de plotagem
 
 # ---------------------------------------------------------------------------- #
 
-# Extrair as coordenadas de myBiomodData
-coordenadas <- myBiomodData@coord
+# Plotar curva de resposta somente das variáveis mais importantes
 
+# Extrair as coordenadas de myBiomodData_final
+coordenadas <- myBiomodData_final@coord
+
+# Extrair os valores das adequabilidades (Ensemble)
 valores_extraidos <- raster::extract(atual_ens, coordenadas)
 
 # Visualizar os primeiros valores extraídos
 head(valores_extraidos)
-
-# Se desejar salvar esses valores em um arquivo .xlsx, use o pacote openxlsx
 
 # Criar um dataframe com as coordenadas e os valores extraídos
 dados_extraidos <- data.frame(coordenadas, valores_extraidos)
@@ -894,13 +958,37 @@ dados_extraidos <- data.frame(coordenadas, valores_extraidos)
 head(dados_extraidos)
 str(dados_extraidos)
 
-toninha_colin$valores_extraidos <- dados_extraidos$valores_extraidos
+# ---------------------------------------------------------------------------- #
 
-str(toninha_colin)
+# Extrair variável resposta (presença/ausência)
+resp <- myBiomodData_final@data.species
+
+# Extrair coordenadas
+xy <- myBiomodData_final@coord
+
+# Extrair variáveis ambientais
+expl <- myBiomodData_final@data.env.var
+
+# Criar data.frame final
+df_final <- data.frame(
+  x = xy[,1],          # coordenada X (longitude)
+  y = xy[,2],          # coordenada Y (latitude)
+  pres_abs = resp,     # presença (1) / ausência (0)
+  expl                 # variáveis ambientais
+)
+
+# Visualizar
+head(df_final)
+
+# ---------------------------------------------------------------------------- #
+
+df_final$valores_extraidos <- dados_extraidos$valores_extraidos
+
+str(df_final)
 
 # Salvar os dados em um arquivo .xlsx
 writexl::write_xlsx(
-  toninha_colin,
+  df_final,
   path = "toninha_colin.xlsx"
 )
 
@@ -909,6 +997,7 @@ adequab <- readxl::read_excel("toninha_colin.xlsx")
 
 head(adequab)
 summary(adequab)
+nrow(adequab)
 
 # ---------------------------------------------------------------------------- #
 
