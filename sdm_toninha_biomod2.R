@@ -1081,7 +1081,7 @@ grid.arrange(bathy, sst, sal, ncol = 3)
 
 # ---------------------------------------------------------------------------- #
 
-# 08. Rodar SDM - Cenário futuro -----
+# 08. Rodar SDM - Cenário futuro
 
 # ---------------------------------------------------------------------------- #
 
@@ -1146,7 +1146,7 @@ plot(bio_ssp585_2100)
 
 # ---------------------------------------------------------------------------- #
 
-bio_ssp585_2100 <- crop(bio_ssp585_2100, ocean_crop) # recorte da área de estudo
+#bio_ssp585_2100 <- crop(bio_ssp585_2100, ocean_crop) # recorte da área de estudo
 bio_ssp585_2100 <- mask(bio_ssp585_2100, ocean_crop) # máscara fora da área de estudo
 
 names(bio_ssp585_2100)
@@ -1375,7 +1375,7 @@ ggplot(df_perda_ganho, aes(x = Classe, y = Area_km2, fill = Tipo)) +
     x = "Intervalo de adequabilidade",
     y = expression("Variação de área (km"^2*")")
   ) +
-  coord_cartesian(ylim = c(-40000, 250000)) +
+  coord_cartesian(ylim = c(-20000, 200000)) +
   theme_minimal(base_size = 14) +
   theme(
     legend.position = "top",
@@ -1387,3 +1387,14 @@ ggplot(df_perda_ganho, aes(x = Classe, y = Area_km2, fill = Tipo)) +
 
 # ---------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------- #
+
+# Dividir a tela em 2 colunas e 1 linha
+par(mfrow = c(1, 2))
+
+# gráfico: projetado com ensemble
+plot(atual_ens, zlim = c(0, 1), col = pal1,
+     main = "Projetado atual\n(Ensemble)")
+
+# gráfico: projetado no futuro
+plot(ssp585_2100_ens, zlim = c(0, 1), col = pal1,
+     main = "Projetado no futuro\n(SSP5-8.5 - 2090/2100)")
