@@ -20,6 +20,8 @@
 # ---------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------- #
 #
+# https://github.com/Carlos-Biologist/sdm_toninha_biomod2/blob/main/sdm_toninha_biomod2.R
+#
 # Vídeo-aula 1 - Apresentação
 #
 # Vídeo-aula 2 - Instalar os pacotes necessários
