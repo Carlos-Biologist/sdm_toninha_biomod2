@@ -1,13 +1,23 @@
 # ---------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------- #
 #                                                                              #
+# Linda Terdiane da Silva Santos                                               #
+# Iracema Lima Pereira                                                         #
+# Débora Florentino de Carvalho                                                #
+# Matheus Lemos                                                                #
+#                                                                              #
+# ---------------------------------------------------------------------------- #
+# ---------------------------------------------------------------------------- #
+#                                                                              #
 # Carlos de Oliveira                                                           #
 #                                                                              #
 # Biólogo -> Recém doutor (julho/2025)                                         #
 # UNISINOS -> Universidade do Vale do Rio dos Sinos - São Leopoldo, RS         #
 # Mamíferos marinhos -> pinípedes (lobos e leões-marinhos)                     #
 # Modelagem em geral, SDM, Modelagem climática e oceânica                      #
+#                                                                              #
 # Inteligência Artificial e suas ferramentas (ML/DL)                           #
+#                                                                              #
 # Curso gravado "Inteligência Artificial aplicada à área biológica e da saúde" #
 # Inscrições: https://go.hotmart.com/O103219722L                               #
 # Custo: R$150,00 - à vista ou em 3x                                           #
@@ -46,6 +56,10 @@
 # Um único banco de dados de ocorrência (- GBIF - Global Biodiversity Information Facility))
 #
 # Objetivo -> MDE/SDM
+#
+# Tempo de curso -> 4 horas
+# Pacote SDM -> leve
+# Pacote Biomod2 -> pouco mais pesado
 #
 # ---------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------- #
