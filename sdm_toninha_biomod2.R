@@ -1,14 +1,29 @@
 # ---------------------------------------------------------------------------- #
-# Curso Online: Dos dados ao mapa: Modelando a distribuição                    #
-# das espécies                                                                 #
+# ---------------------------------------------------------------------------- #
 #                                                                              #
+# Carlos de Oliveira                                                           #
+#                                                                              #
+# Biólogo -> Recém doutor (julho/2025)                                         #
+# UNISINOS -> Universidade do Vale do Rio dos Sinos - São Leopoldo, RS         #
+# Mamíferos marinhos -> pinípedes (lobos e leões-marinhos)                     #
+# Modelagem em geral, SDM, Modelagem climática e oceânica                      #
+# Inteligência Artificial e suas ferramentas (ML/DL)                           #
+# Curso gravado "Inteligência Artificial aplicada à área biológica e da saúde" #
+# Inscrições: https://go.hotmart.com/O103219722L                               #
+# Custo: R$150,00 - à vista ou em 3x                                           #
+#                                                                              #
+# ---------------------------------------------------------------------------- #
+# ---------------------------------------------------------------------------- #
+#                                                                              #
+# Curso Online: Dos dados ao mapa: Modelando a distribuição das espécies       #
+#                                                                              #                                                                             #
 # Criado por: Dr. Carlos de Oliveira                                           #
 # Data: 21-02-2026                                                             #
 # Contato: carlos.prof.bio@gmail.com                                           #
 #                                                                              #
 # Descrição: o script representa o processo geral de implementação de          #
 # uma rotina de modelagem da adequabilidade ambiental, para espécies marinhas  # 
-# no contexto da Modelagem de Distribuição de Especies (MDE).                  #
+# no contexto da Modelagem de Distribuição de Especies (MDE/SDM).              #
 # Todos os procedimentos podem ser modificados conforme o escopo e necessidade # 
 # da pesquisa.                                                                 #
 #                                                                              #
@@ -17,16 +32,29 @@
 # pacotes utilizados pelo script.                                              #
 # - as pastas de origem e destino dos arquivos devem ser atualizadas           #
 # conforme o computador onde serão realizados os processos de modelagem.       #
+#                                                                              #
 # ---------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------- #
 #
 # https://github.com/Carlos-Biologist/sdm_toninha_biomod2/blob/main/sdm_toninha_biomod2.R
 #
+# Espécie alvo dessa prática -> Pontoporia blainvillei (Toninha, Franciscana)
+#
+# "Importante -> Prática -> cunho didático"
+#
+# Cada espécie tem uma história de vida -> levar em consideração
+# Um único banco de dados de ocorrência (- GBIF - Global Biodiversity Information Facility))
+#
+# Objetivo -> MDE/SDM
+#
+# ---------------------------------------------------------------------------- #
+# ---------------------------------------------------------------------------- #
+#
 # Vídeo-aula 1 - Apresentação
 #
 # Vídeo-aula 2 - Instalar os pacotes necessários
 #              - Extrair os pontos de ocorrência da toninha (Pontoporia blainvillei)
-#              - GBIF (Global Biodiversity Information Facility)
+#              - GBIF
 #              - Tratar (selecionar) os melhores pontos (até o momento).
 #              - Visualizar esse pontos
 #
