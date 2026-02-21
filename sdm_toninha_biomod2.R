@@ -1,20 +1,12 @@
 # ---------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------- #
 #                                                                              #
-# Linda Terdiane da Silva Santos                                               #
-# Iracema Lima Pereira                                                         #
-# Débora Florentino de Carvalho                                                #
-# Matheus Lemos                                                                #
-#                                                                              #
-# ---------------------------------------------------------------------------- #
-# ---------------------------------------------------------------------------- #
-#                                                                              #
 # Carlos de Oliveira                                                           #
 #                                                                              #
 # Biólogo -> Recém doutor (julho/2025)                                         #
 # UNISINOS -> Universidade do Vale do Rio dos Sinos - São Leopoldo, RS         #
 # Mamíferos marinhos -> pinípedes (lobos e leões-marinhos)                     #
-# Modelagem em geral, SDM, Modelagem climática e oceânica                      #
+# Modelagem em geral, MDE/SDM, Modelagem climática e oceânica                  #
 #                                                                              #
 # Inteligência Artificial e suas ferramentas (ML/DL)                           #
 #                                                                              #
@@ -273,7 +265,7 @@ points(sp_toninha$lon, sp_toninha$lat,          # Plota os pontos de ocorrência
 # ---------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------- #
 
-# 03. Obter dados e processar dados ambientais
+# 03. Obter dados e processar camadas ambientais
 
 # https://www.bio-oracle.org/
 # https://onlinelibrary.wiley.com/doi/full/10.1111/geb.13813
@@ -637,7 +629,7 @@ toninha_ausencias <- toninha_ausencias %>%
   slice_sample(n = 102)                     # Sortear 102 pontos
 
 nrow(toninha_ausencias)                     # Número de registros (observações = linhas)
-
+str(toninha_ausencias)
 # ---------------------------------------------------------------------------- #
 
 # Concatenar dados de presença e ausências 
@@ -803,7 +795,7 @@ ModelsTable # Visualizar algoritmos
 #allModels <- c('ANN', 'CTA', 'DNN', 'FDA', 'GAM', 'GBM', 'GLM', 'MARS'
 #               , 'MAXENT', 'MAXNET', 'RF', 'RFd', 'SRE', 'XGBOOST')
 
-allModels <- c('GAM', 'GLM', 'RF', 'XGBOOST')
+allModels <- c('GAM', 'GLM', 'RF')
 
 # Definir objeto de opções de modelagem (tipos de dados, modelos e estratégias), que será usado em BIOMOD_Modeling
 
@@ -821,12 +813,12 @@ toninha_opt <- bm_ModelingOptions(
 toninha_model <- BIOMOD_Modeling(
   bm.format    = myBiomodData_final,               # O objeto com dados de presenças/ausências e variáveis ambientais
   modeling.id  = 'AllModels',                      # Nome identificador da modelagem, usado para salvar resultados
-  models       = c('GAM','GLM','RF', 'XGBOOST'),   # Escolhe os modelos que serão treinados
+  models       = c('GAM','GLM','RF'),              # Escolhe os modelos que serão treinados
   CV.strategy  = 'block',                          # Define a validação cruzada espacial em blocos
   CV.perc      = 0.7,                              # Proporção do conjunto de treino (70%) em cada bloco
   OPT.strategy = 'default',                        # Estratégia padrão de otimização dos parâmetros
   metric.eval  = c('TSS','AUCroc'),                # Métricas usadas para avaliar o desempenho dos modelos
-  var.import   = 3,                                # Número de permutações para calcular a importância de cada variável
+  var.import   = 1,                                # Número de permutações para calcular a importância de cada variável
   seed.val     = 42                                # Semente para aleatoriedade, garantindo que resultados sejam reprodutíveis
 )
 
@@ -838,7 +830,7 @@ scores <- bm_PlotEvalMean(
   toninha_model,                    # O objeto de modelagem que contém os modelos treinados
   metric.eval = c('TSS','AUCroc'),  # Métricas de avaliação a serem exibidas: TSS (True Skill Statistic) e AUC (Area Under the Curve)
   dataset = "validation",           # Indica que a avaliação será feita sobre o conjunto de validação (não treino)
-  group.by = "algo",                # Agrupa os resultados por algoritmo/modelo (ex.: separa GAM, GLM, RF, XGBoost)
+  group.by = "algo",                # Agrupa os resultados por algoritmo/modelo (ex.: separa GAM, GLM, RF)
   do.plot = TRUE                    # Define que o gráfico será gerado automaticamente
 )
 
@@ -884,7 +876,7 @@ scores
 # ---------------------------------------------------------------------------- #
 
 # Extrai os nomes ou identificadores de todos os modelos que foram construídos no objeto toninha_model
-# (ex.: "GAM", "GLM", "RF", "XGBoost") para usar na modelagem ensemble
+# (ex.: "GAM", "GLM", "RF") para usar na modelagem ensemble
 
 mods <- get_built_models(toninha_model)  
 
@@ -894,7 +886,7 @@ toninha_ens <- BIOMOD_EnsembleModeling(
   em.by = "all",                                     # Cria o ensemble usando todos os modelos disponíveis
   em.algo = c('EMmean'),                             # Algoritmo de ensemble: EMmean = média simples das probabilidades dos modelos
   metric.select = c('TSS', 'AUCroc'),                # Métrica usada para selecionar modelos que entram no ensemble
-  metric.select.thresh = c(0.8, 0.8),                     # Apenas modelos com TSS e AUCroc >= 0.8 são incluídos no ensemble
+  metric.select.thresh = c(0.8, 0.8),                # Apenas modelos com TSS e AUCroc >= 0.8 são incluídos no ensemble
   metric.eval = c("TSS", 'AUCroc'),                  # Métrica usada para avaliação do ensemble
   var.import = 3,                                    # Número de permutações para calcular a importância das variáveis no ensemble
   EMci.alpha = 0.05,                                 # Nível de significância para o cálculo do intervalo de confiança do ensemble
@@ -1193,6 +1185,7 @@ plot(bio_ssp585_2100)
 #bio_ssp585_2100 <- crop(bio_ssp585_2100, ocean_crop) # recorte da área de estudo
 bio_ssp585_2100 <- mask(bio_ssp585_2100, ocean_crop) # máscara fora da área de estudo
 
+names(bio_colin)
 names(bio_ssp585_2100)
 
 # ---------------------------------------------------------------------------- #
@@ -1419,7 +1412,7 @@ ggplot(df_perda_ganho, aes(x = Classe, y = Area_km2, fill = Tipo)) +
     x = "Intervalo de adequabilidade",
     y = expression("Variação de área (km"^2*")")
   ) +
-  coord_cartesian(ylim = c(-20000, 200000)) +
+  coord_cartesian(ylim = c(-30000, 300000)) +
   theme_minimal(base_size = 14) +
   theme(
     legend.position = "top",
